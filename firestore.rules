@@ -1,0 +1,40 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    // Pages: private to owner. Public shares are served via server-side APIs.
+    match /pages/{pageId} {
+      allow create: if isSignedIn() && request.resource.data.createdBy == request.auth.uid;
+
+      allow read: if isOwner(resource.data.createdBy);
+
+      allow update: if isOwner(resource.data.createdBy)
+        // Prevent ownership changes
+        && request.resource.data.createdBy == resource.data.createdBy;
+
+      allow delete: if isOwner(resource.data.createdBy);
+    }
+
+    // Shares: owner-managed. Access by others should go through server endpoints.
+    match /shares/{shareId} {
+      // Owner can create their own share docs
+      allow create: if isSignedIn() && request.resource.data.ownerUid == request.auth.uid;
+      // Owner can read/update/delete their own shares
+      allow read, update, delete: if isOwner(resource.data.ownerUid);
+    }
+
+
+
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
