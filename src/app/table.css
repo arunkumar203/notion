@@ -1,0 +1,1183 @@
+/* ────────────────────────────────────────────────────────────
+   Custom Table Extension — Optimized Styles
+   - Light theme forced within .custom-table-ext
+   - Minimal duplication, merged selectors, CSS variables
+   - Safe overrides for TipTap/ProseMirror dark/global styles
+   ──────────────────────────────────────────────────────────── */
+
+.custom-table-ext {
+  /* Notion-style theme tokens */
+  --bg: #ffffff;
+  --bg-muted: #f7f6f3;
+  --fg: #37352f;
+  --fg-muted: #787774;
+  --border: #e1e5e9;
+  --hover: #f1f1ef;
+  --primary: #2383e2;
+  --primary-10: rgba(35, 131, 226, 0.1);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.05);
+  --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.1);
+
+  margin: 1.5rem 0;
+  position: relative;
+  overflow: visible !important;
+  color-scheme: light !important;
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+}
+
+/* Remove any editor wrapper styling that might add gray bars */
+.custom-table-ext::before,
+.custom-table-ext::after {
+  display: none !important;
+}
+
+/* Override NodeViewWrapper styling */
+.kt.custom-table-ext {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  margin: 1.5rem 0 !important;
+  box-shadow: none !important;
+}
+
+/* Force transparent background on all wrapper elements */
+.ProseMirror .kt.custom-table-ext,
+.ProseMirror-widget .kt.custom-table-ext,
+div[data-type="custom-table"] {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Override any ProseMirror node selection styling */
+.ProseMirror-selectednode .custom-table-ext,
+.ProseMirror .custom-table-ext.ProseMirror-selectednode {
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+}
+
+/* Override any global editor table styles */
+.editor-container .custom-table-ext,
+.editor-container .custom-table-ext table,
+.editor-container .custom-table-ext th,
+.editor-container .custom-table-ext td {
+  border: none !important;
+  background: transparent !important;
+}
+
+/* Ensure our custom table styles take precedence */
+.custom-table-ext .kt__table {
+  border: 1px solid #e1e5e9 !important;
+  background: #ffffff !important;
+}
+
+.custom-table-ext .kt__th,
+.custom-table-ext .kt__td {
+  border: 1px solid #e1e5e9 !important;
+  background: #ffffff !important;
+}
+
+.custom-table-ext .kt__th {
+  background: #f7f6f3 !important;
+}
+
+/* Containers & scrolling */
+.custom-table-ext .kt__container,
+.custom-table-ext .kt__table-wrapper,
+.custom-table-ext .kt__scroll,
+.custom-table-ext .kt__add-row-bottom,
+.custom-table-ext .kt__table {
+  background: var(--bg) !important;
+}
+
+/* Ensure containers allow menu overflow */
+.custom-table-ext,
+.custom-table-ext .kt__container,
+.custom-table-ext .kt__table-wrapper,
+.custom-table-ext .kt__scroll {
+  overflow: visible !important;
+}
+
+.kt__container {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  overflow: visible !important;
+  position: relative;
+  background: transparent !important;
+  border: none !important;
+}
+
+.kt__table-wrapper {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 8px;
+  position: relative;
+  overflow: visible !important;
+  background: transparent !important;
+  border: none !important;
+}
+
+.kt__scroll {
+  overflow-x: auto;
+  overflow-y: visible;
+  flex: 1;
+  min-width: 0;
+  position: relative;
+}
+
+/* Table - Notion style with visible borders */
+.custom-table-ext .kt__table,
+.ProseMirror .custom-table-ext .kt__table {
+  width: 100%;
+  border-collapse: collapse !important;
+  border-spacing: 0 !important;
+  border: 1px solid #e1e5e9 !important;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #ffffff !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  table-layout: fixed;
+}
+
+/* Head & Cells - Clear borders like Notion */
+.custom-table-ext .kt__th,
+.custom-table-ext .kt__td,
+.ProseMirror .custom-table-ext .kt__th,
+.ProseMirror .custom-table-ext .kt__td {
+  padding: 14px 16px;
+  vertical-align: top;
+  background: #ffffff !important;
+  border: 1px solid #e1e5e9 !important;
+  color: #37352f !important;
+  position: relative;
+}
+
+.custom-table-ext .kt__th {
+  background: #f7f6f3 !important;
+  font-weight: 500;
+  color: #37352f !important;
+  border-bottom: 1px solid #e1e5e9 !important;
+}
+
+/* Ensure all borders are visible */
+.custom-table-ext .kt__th:last-child,
+.custom-table-ext .kt__td:last-child {
+  border-right: 1px solid #e1e5e9 !important;
+}
+
+.custom-table-ext tbody tr:last-child .kt__td {
+  border-bottom: 1px solid #e1e5e9 !important;
+}
+
+/* Remove double borders */
+.custom-table-ext .kt__th+.kt__th,
+.custom-table-ext .kt__td+.kt__td {
+  border-left: none !important;
+}
+
+.custom-table-ext tr+tr .kt__td {
+  border-top: none !important;
+}
+
+.custom-table-ext thead .kt__th {
+  border-top: none !important;
+}
+
+.custom-table-ext .kt__th:first-child,
+.custom-table-ext .kt__td:first-child {
+  border-left: none !important;
+}
+
+/* Hide TipTap resize stuff */
+.custom-table-ext .column-resize-handle,
+.custom-table-ext .ProseMirror-widget,
+.custom-table-ext .tableWrapper {
+  display: none !important;
+}
+
+/* Inputs (cell + header name) */
+.custom-table-ext .kt__input,
+.custom-table-ext .kt__th-name {
+  width: 100%;
+  background: transparent !important;
+  color: var(--fg) !important;
+  border: 1px solid transparent !important;
+  border-radius: 4px;
+  font-size: 14px;
+  transition: all 0.15s ease;
+}
+
+.custom-table-ext .kt__input:hover,
+.custom-table-ext .kt__th-name:hover {
+  background: var(--bg-muted) !important;
+  border-color: var(--border) !important;
+  color: var(--fg) !important;
+}
+
+.custom-table-ext .kt__input:focus,
+.custom-table-ext .kt__th-name:focus {
+  background: var(--bg) !important;
+  border-color: var(--primary) !important;
+  outline: none !important;
+  box-shadow: 0 0 0 3px var(--primary-10) !important;
+}
+
+.kt__td .kt__input:focus,
+.kt__td .kt__select:focus,
+.kt__td .kt__checkbox:focus,
+.kt__td .kt__progress-input:focus,
+.kt__th .kt__th-name:focus {
+  /* Keep focused cell outline, not inner controls */
+  outline: none !important;
+  box-shadow: none !important;
+  border-color: transparent !important;
+  background: transparent !important;
+}
+
+/* Focus ring per-cell - Notion style */
+.kt__td:focus-within,
+.kt__th:focus-within {
+  background: #f1f1ef !important;
+  border-color: #2383e2 !important;
+  box-shadow: 0 0 0 1px #2383e2 !important;
+}
+
+/* Cell hover effect */
+.kt__td:hover {
+  background: #f7f6f3 !important;
+}
+
+.kt__th:hover {
+  background: #f1f1ef !important;
+}
+
+/* Select */
+.custom-table-ext .kt__select {
+  width: 100%;
+  padding: 8px 32px 8px 12px;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  color: #ffffff !important;
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 12px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='white' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+}
+
+/* Ensure select elements respect inline background-color styles */
+.custom-table-ext .kt__select {
+  background: transparent;
+}
+
+/* Force options visible in light mode */
+.custom-table-ext .kt__select option {
+  color: var(--fg) !important;
+  background: var(--bg) !important;
+}
+
+/* Inputs: type-specific tweaks */
+.kt__input[type="date"] {
+  cursor: pointer;
+}
+
+.kt__input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 0.15s ease;
+}
+
+.kt__input[type="date"]:hover::-webkit-calendar-picker-indicator {
+  opacity: 1;
+}
+
+.kt__input[type="number"]::-webkit-inner-spin-button,
+.kt__input[type="number"]::-webkit-outer-spin-button {
+  opacity: 0.5;
+  transition: opacity 0.15s ease;
+}
+
+.kt__input[type="number"]:hover::-webkit-inner-spin-button,
+.kt__input[type="number"]:hover::-webkit-outer-spin-button {
+  opacity: 1;
+}
+
+.kt__input::placeholder {
+  color: transparent;
+}
+
+/* Checkbox */
+.kt__checkbox {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: var(--primary);
+  border-radius: 4px;
+  transition: all 0.15s ease;
+}
+
+.kt__checkbox:hover:not(:disabled) {
+  transform: scale(1.1);
+}
+
+.kt__checkbox-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+}
+
+/* Progress */
+.kt__progress-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  min-width: 150px;
+}
+
+.kt__progress-bar {
+  flex: 1;
+  height: 12px;
+  background: #e5e7eb !important;
+  border-radius: 6px;
+  position: relative;
+  overflow: visible;
+  transition: all 0.2s ease;
+}
+
+.kt__progress-fill {
+  height: 100%;
+  background: #3b82f6 !important;
+  border-radius: 6px;
+  transition: width 0.15s ease;
+  position: relative;
+  box-shadow: 0 1px 3px rgba(59, 130, 246, 0.3);
+}
+
+/* Draggable progress bar */
+.kt__progress-bar.draggable {
+  cursor: pointer;
+}
+
+.kt__progress-bar.draggable:hover {
+  height: 14px;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.2);
+}
+
+.kt__progress-bar.draggable:hover .kt__progress-fill {
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
+}
+
+.kt__progress-bar.disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+
+
+.kt__progress-input {
+  width: 60px;
+  padding: 4px 8px;
+  text-align: center;
+  font-size: 12px;
+  border: none !important;
+  background: transparent !important;
+  flex-shrink: 0;
+}
+
+.kt__progress-label {
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+/* Header layout / controls */
+.kt__th {
+  position: relative;
+}
+
+.kt__th-inner {
+  position: relative;
+  cursor: default;
+}
+
+.kt__th-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+  position: relative;
+}
+
+.kt__th-type-section {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.kt__type-btn-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.kt__th .kt__type-btn,
+.kt__manage-tags-btn,
+.kt__col-menu-btn,
+.kt__icon-btn {
+  background: var(--bg-muted) !important;
+  border: 1px solid var(--border) !important;
+  color: #4b5563 !important;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 28px;
+  padding: 4px 6px;
+  font-size: 14px;
+}
+
+.kt__th .kt__type-btn:hover,
+.kt__manage-tags-btn:hover,
+.kt__col-menu-btn:hover,
+.kt__icon-btn:hover {
+  background: var(--hover) !important;
+  border-color: var(--primary) !important;
+  color: var(--primary) !important;
+}
+
+.kt__th .kt__type-btn:disabled,
+.kt__manage-tags-btn:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.kt__th-top .kt__type-btn .kt__type-label {
+  display: none;
+}
+
+/* icon-only */
+.kt__th-top .kt__type-btn .kt__type-icon,
+.kt__type-menu .kt__dropdown-item .kt__type-icon {
+  font-size: 14px;
+}
+
+/* Column / row menus */
+.kt__col-menu-trigger {
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-muted);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  width: 24px;
+  height: 24px;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  color: var(--fg-muted);
+  box-shadow: var(--shadow-sm);
+}
+
+.kt__th:hover .kt__col-menu-trigger {
+  opacity: 1;
+}
+
+.kt__col-menu-trigger:hover {
+  background: var(--hover);
+  border-color: var(--primary);
+  color: var(--primary);
+  opacity: 1 !important;
+}
+
+/* Menus (column/type/row) */
+.kt__column-menu,
+.kt__type-menu,
+.kt__row-menu {
+  position: absolute;
+  z-index: 1000;
+  background: #ffffff !important;
+  color: #37352f !important;
+  border: 1px solid #e1e5e9 !important;
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08);
+  white-space: nowrap;
+  animation: slideDown 0.15s ease;
+}
+
+/* Menu backdrop to prevent background interference */
+.kt__column-menu::before,
+.kt__type-menu::before,
+.kt__row-menu::before {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  right: -4px;
+  bottom: -4px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 12px;
+  z-index: -1;
+  backdrop-filter: blur(8px);
+}
+
+.kt__column-menu {
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 8px;
+  min-width: 180px;
+}
+
+/* Better positioning for edge columns */
+.kt__th:nth-last-child(-n+2) .kt__column-menu {
+  left: auto;
+  right: 0;
+  transform: none;
+}
+
+.kt__th:first-child .kt__column-menu {
+  left: 0;
+  transform: none;
+}
+
+/* Prevent menu cutoff by adjusting position */
+.kt__th:last-child .kt__column-menu {
+  right: 0;
+  left: auto;
+  transform: translateX(0);
+}
+
+.kt__type-menu {
+  top: 100%;
+  left: 0;
+  margin-top: 4px;
+  min-width: 150px;
+}
+
+.kt__th:last-child .kt__type-menu {
+  left: auto;
+  right: 0;
+}
+
+.kt__row-menu-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 100%;
+  width: 40px;
+  justify-content: center;
+}
+
+.kt__row-menu-trigger {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--fg-muted);
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  padding: 0;
+  line-height: 1;
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  z-index: 1;
+}
+
+.kt__row-menu-trigger:hover {
+  background: var(--hover);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.kt__row-menu {
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-left: 8px;
+  min-width: 180px;
+  animation: slideRight 0.15s ease;
+  background: #ffffff !important;
+  border: 1px solid #e1e5e9 !important;
+}
+
+/* Dropdown shared */
+.kt__dropdown {
+  display: flex;
+  flex-direction: column;
+  padding: 6px;
+  gap: 2px;
+  background: #ffffff !important;
+  border-radius: 6px;
+  position: relative;
+  z-index: 1001;
+}
+
+.kt__dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #ffffff !important;
+  border: none;
+  border-radius: 4px;
+  color: #37352f !important;
+  font-size: 14px;
+  font-weight: 400;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: left;
+  position: relative;
+  z-index: 1002;
+}
+
+.kt__dropdown-item:hover {
+  background: #f1f1ef !important;
+  color: #2383e2 !important;
+}
+
+.kt__dropdown-item--active {
+  background: #e8f4fd !important;
+  color: #2383e2 !important;
+}
+
+.kt__dropdown-item--danger {
+  color: #e03e3e !important;
+}
+
+.kt__dropdown-item--danger:hover {
+  background: #fdf2f2 !important;
+  color: #e03e3e !important;
+}
+
+.kt__dropdown-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  font-size: 16px;
+}
+
+/* Add column button - Notion style */
+.kt__add-column-sidebar {
+  position: absolute;
+  right: -28px;
+  top: 0;
+  height: 100%;
+  display: flex;
+  align-items: stretch;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* Show add column button on table hover */
+.kt__container:hover .kt__add-column-sidebar,
+.kt__add-column-sidebar:hover {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Extend hover area slightly */
+.kt__add-column-sidebar::before {
+  content: '';
+  position: absolute;
+  left: -12px;
+  top: 0;
+  width: 36px;
+  height: 100%;
+  background: transparent;
+}
+
+.kt__add-column-btn {
+  width: 24px;
+  height: 100%;
+  min-width: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 4px;
+  color: #6c757d;
+  font-size: 14px;
+  font-weight: 400;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  padding: 0;
+  line-height: 1;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  position: relative;
+  z-index: 11;
+}
+
+.kt__add-column-btn:hover {
+  background: #e9ecef;
+  border-color: #adb5bd;
+  color: #495057;
+  transform: none;
+}
+
+.kt__add-column-btn:active {
+  transform: scale(0.98);
+}
+
+/* Row add button - Notion style */
+.kt__add-row-btn-permanent {
+  width: 100%;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 4px;
+  color: #6c757d;
+  font-size: 14px;
+  font-weight: 400;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  padding: 0;
+  line-height: 1;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  position: relative;
+  z-index: 11;
+}
+
+.kt__add-row-btn-permanent:hover {
+  background: #e9ecef;
+  border-color: #adb5bd;
+  color: #495057;
+  transform: none;
+}
+
+.kt__add-row-btn-permanent:active {
+  transform: scale(0.98);
+}
+
+.kt__add-row-bottom {
+  position: relative;
+  margin-top: 4px;
+  width: 100%;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+  z-index: 10;
+  background: transparent !important;
+}
+
+/* Show add row button on table hover */
+.custom-table-ext:hover .kt__add-row-bottom,
+.kt__add-row-bottom:hover {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Extend hover area slightly */
+.kt__add-row-bottom::before {
+  content: '';
+  position: absolute;
+  top: -12px;
+  left: 0;
+  width: 100%;
+  height: 40px;
+  background: transparent;
+}
+
+.kt__add-row-btn {
+  width: 100%;
+  padding: 10px 16px;
+  background: transparent;
+  border: none;
+  color: var(--fg-muted);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.kt__add-row-btn:hover {
+  background: var(--hover);
+  color: var(--primary);
+}
+
+.kt__add-col-btn {
+  width: 100%;
+  height: 100%;
+  padding: 12px 16px;
+  background: transparent;
+  border: none;
+  color: var(--fg-muted);
+  font-size: 14px;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s ease;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.kt__add-col-btn:hover {
+  background: var(--hover);
+  color: var(--primary);
+}
+
+/* Table delete (chip) */
+.kt__table-delete {
+  position: absolute;
+  top: -12px;
+  right: -6px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--hover);
+  border: 1px solid var(--border);
+  color: var(--fg-muted);
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 100;
+  transition: all 0.2s ease;
+  line-height: 1;
+  padding: 0;
+  font-family: Arial, sans-serif;
+}
+
+.kt__table-delete:hover {
+  background: #fee2e2;
+  border-color: #fca5a5;
+  color: #dc2626;
+  transform: scale(1.1);
+}
+
+.kt__table-delete:active {
+  transform: scale(0.95);
+}
+
+/* Modals & backdrops */
+.custom-table-ext .kt__modal {
+  background: var(--bg) !important;
+  color: var(--fg) !important;
+}
+
+.custom-table-ext .kt__modal-backdrop {
+  background: rgba(0, 0, 0, 0.5) !important;
+  z-index: 9999;
+}
+
+/* Generic icon button variants */
+.kt__icon-btn--danger:hover {
+  background: #fee2e2;
+  border-color: #ef4444;
+  color: #ef4444;
+}
+
+.kt__row-actions-menu .kt__icon-btn+.kt__icon-btn {
+  margin-top: 2px;
+}
+
+/* Remove global table styles inside ProseMirror */
+.ProseMirror .custom-table-ext table,
+.ProseMirror .custom-table-ext th,
+.ProseMirror .custom-table-ext td {
+  border: none !important;
+  background-color: transparent !important;
+}
+
+/* Always force light scheme for all elements within component */
+.custom-table-ext,
+.custom-table-ext *,
+.custom-table-ext input,
+.custom-table-ext select,
+.custom-table-ext button {
+  color-scheme: light !important;
+}
+
+/* Specific overrides for cells that might get dark theme */
+.custom-table-ext .kt__td,
+.custom-table-ext .kt__th {
+  background-color: #ffffff !important;
+  color: #374151 !important;
+}
+
+.custom-table-ext .kt__th {
+  background-color: #f9fafb !important;
+}
+
+/* Override any dark theme on inputs within cells */
+.custom-table-ext .kt__td input,
+.custom-table-ext .kt__td div,
+.custom-table-ext .kt__th input,
+.custom-table-ext .kt__th div {
+  background-color: transparent !important;
+  color: #374151 !important;
+}
+
+/* Don't override select background - let inline styles work */
+.custom-table-ext .kt__td select {
+  color: #ffffff !important;
+}
+
+/* Ensure select elements with inline styles display colors */
+.custom-table-ext .kt__select[style] {
+  color: #ffffff !important;
+}
+
+/* Force progress bar colors with maximum specificity */
+.custom-table-ext .kt__td .kt__progress-cell .kt__progress-bar {
+  background-color: #e5e7eb !important;
+  background: #e5e7eb !important;
+}
+
+.custom-table-ext .kt__td .kt__progress-cell .kt__progress-fill {
+  background-color: #3b82f6 !important;
+  background: #3b82f6 !important;
+}
+
+
+
+/* Allow inline background colors on select elements - no overrides */
+
+/* Stronger color enforcement for progress bars */
+.custom-table-ext .kt__progress-bar {
+  background-color: #e5e7eb !important;
+}
+
+.custom-table-ext .kt__progress-fill {
+  background-color: #3b82f6 !important;
+}
+
+/* Force progress colors with highest specificity */
+.custom-table-ext .kt__progress-cell .kt__progress-bar {
+  background: #e5e7eb !important;
+}
+
+.custom-table-ext .kt__progress-cell .kt__progress-fill {
+  background: #3b82f6 !important;
+}
+
+/* Don't override select background colors - let inline styles work */
+
+/* Animations */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideRight {
+  from {
+    opacity: 0;
+    transform: translateY(-50%) translateX(-8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0);
+  }
+}
+
+/* Mobile tweaks */
+@media (max-width: 768px) {
+  .kt__row-actions-menu {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .kt__icon-btn {
+    font-size: 12px;
+    padding: 3px 6px;
+  }
+
+  .kt__column-menu,
+  .kt__type-menu {
+    left: 12px;
+    right: auto;
+  }
+
+  .kt__scroll {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* View-only mode */
+.custom-table-ext .kt__input:disabled,
+.custom-table-ext .kt__select:disabled,
+.custom-table-ext .kt__checkbox:disabled,
+.custom-table-ext .kt__th-name:disabled {
+  background: var(--bg-muted) !important;
+  color: var(--fg-muted) !important;
+  cursor: default !important;
+  border-color: var(--border) !important;
+}
+
+
+
+/* Minor table row finishing */
+.kt__row:last-child {
+  border-bottom: 1px solid var(--hover);
+}
+
+/* Row actions overlay - positioned close to table */
+.kt__row-actions-overlay {
+  position: absolute;
+  left: -56px;
+  z-index: 100;
+  pointer-events: auto;
+  transform: translateY(-50%);
+}
+
+/* Add hover buffer area to prevent menu from closing */
+.kt__row-actions-overlay::before {
+  content: '';
+  position: absolute;
+  right: -8px;
+  top: -12px;
+  width: 32px;
+  height: 48px;
+  background: transparent;
+  pointer-events: auto;
+}
+
+/* Column resize handle */
+.kt__resize-handle {
+  position: absolute;
+  right: -2px;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  cursor: col-resize;
+  background: transparent;
+  z-index: 50;
+  transition: background-color 0.2s ease;
+}
+
+.kt__resize-handle:hover {
+  background: #2383e2;
+}
+
+.kt__resize-handle:active {
+  background: #1d4ed8;
+}
+
+/* Make th position relative for resize handle */
+.kt__th {
+  position: relative;
+}
+
+/* Resizing cursor for entire table when resizing */
+.custom-table-ext.resizing {
+  cursor: col-resize;
+}
+
+.custom-table-ext.resizing * {
+  cursor: col-resize !important;
+}
+
+/* Z-layers */
+.kt__column-menu,
+.kt__type-menu,
+.kt__row-menu {
+  z-index: 200;
+}
+
+/* Final color overrides - highest priority */
+.custom-table-ext div.kt__progress-bar {
+  background: #e5e7eb !important;
+}
+
+.custom-table-ext div.kt__progress-fill {
+  background: #3b82f6 !important;
+}
+
+.custom-table-ext select.kt__select[style*="background"] {
+  color: #ffffff !important;
+}
+
+/* Override any CSS reset or normalize that might affect colors */
+.custom-table-ext * {
+  box-sizing: border-box;
+}
+
+/* Force select background colors to work */
+.custom-table-ext td.kt__td select.kt__select[style*="background-color"] {
+  color: #ffffff !important;
+}
+
+/* Ensure select cell allows background colors */
+.custom-table-ext .kt__select-cell {
+  display: block;
+}
+
+.custom-table-ext .kt__select-cell .kt__select {
+  background: transparent;
+}
+
+.custom-table-ext .kt__select-cell .kt__select[style*="background-color"] {
+  color: #ffffff !important;
+}
+
+.custom-table-ext .kt__progress-bar,
+.custom-table-ext .kt__progress-fill {
+  display: block !important;
+}
+
+/* Ensure inline styles work for select elements */
+.custom-table-ext .kt__select[style*="background-color"] {
+  color: #ffffff !important;
+}
+
+/* Final override for select colors - highest priority */
+.ProseMirror .custom-table-ext .kt__td .kt__select[style*="background-color"] {
+  color: #ffffff !important;
+}
+
+/* Remove any background overrides that prevent inline styles */
+.custom-table-ext .kt__select:not([style*="background-color"]) {
+  background-color: #6b7280;
+}
+
+/* Ensure select colors work properly */
+.custom-table-ext .kt__td .kt__select[style*="background-color"] {
+  /* Preserve inline background-color */
+  color: #ffffff !important;
+}

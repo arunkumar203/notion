@@ -1,0 +1,57 @@
+*** Begin Patch
+*** Update File: src/components/Editor/index.tsx
+@@
+-            <input
++            <input
+               type="text"
+-              className="border rounded px-2 py-1 text-sm w-full"
++              className="border rounded px-2 py-1 text-sm w-full disabled:opacity-60"
+               placeholder="Search or create page"
+               value={linkQuery}
+-              onChange={(e) => { setLinkQuery(e.target.value); setLinkIndex(0); }}
++              onChange={(e) => { if (!linkBusy) { setLinkQuery(e.target.value); setLinkIndex(0); } }}
+               onKeyDown={(e) => {
+                 const list = filteredLinkPages;
+                 if (e.key === 'ArrowDown') { e.preventDefault(); setLinkIndex((i) => Math.min(i + 1, list.length + (canCreateLink ? 0 : -1))); }
+                 else if (e.key === 'ArrowUp') { e.preventDefault(); setLinkIndex((i) => Math.max(i - 1, 0)); }
+-                else if (e.key === 'Enter') { e.preventDefault(); handlePickLinkItem(); }
+-                else if (e.key === 'Escape') { setLinkOpen(false); }
++                else if (e.key === 'Enter') { e.preventDefault(); if (!linkBusy) handlePickLinkItem(); }
++                else if (e.key === 'Escape') { if (!linkBusy) setLinkOpen(false); }
+               }}
+               autoFocus
++              disabled={linkBusy}
+             />
+@@
+-                      <button
+-                        className={`w/full text-left px-2 py-1 text-sm rounded ${i === linkIndex ? 'bg-gray-100' : ''}`}
+-                        onMouseEnter={() => setLinkIndex(i)}
+-                        onClick={() => { setLinkIndex(i); handlePickLinkItem(); }}
++                      <button
++                        className={`w-full text-left px-2 py-1 text-sm rounded ${i === linkIndex ? 'bg-gray-100' : ''} ${linkBusy ? 'opacity-60 pointer-events-none' : ''}`}
++                        onMouseEnter={() => setLinkIndex(i)}
++                        onClick={() => { if (!linkBusy) { setLinkIndex(i); handlePickLinkItem(); } }}
+                       >
+                         {p.name || 'Untitled'}
+                       </button>
+@@
+-                      <button
+-                        className={`w-full text-left px-2 py-1 text-sm rounded ${linkIndex === filteredLinkPages.length ? 'bg-gray-100' : ''}`}
+-                        onMouseEnter={() => setLinkIndex(filteredLinkPages.length)}
+-                        onClick={() => { setLinkIndex(filteredLinkPages.length); handlePickLinkItem(); }}
++                      <button
++                        className={`w-full text-left px-2 py-1 text-sm rounded flex items-center ${linkIndex === filteredLinkPages.length ? 'bg-gray-100' : ''} ${linkBusy ? 'opacity-60 pointer-events-none' : ''}`}
++                        onMouseEnter={() => setLinkIndex(filteredLinkPages.length)}
++                        onClick={() => { if (!linkBusy) { setLinkIndex(filteredLinkPages.length); handlePickLinkItem(); } }}
+                       >
+-                        Create new page “{(linkQuery || '').trim()}”
++                        {linkBusy ? (
++                          <>
++                            <span className="inline-block w-3 h-3 mr-2 border-2 border-gray-300 border-t-transparent rounded-full animate-spin" />
++                            Creating…
++                          </>
++                        ) : (
++                          <>Create new page “{(linkQuery || '').trim()}”</>
++                        )}
+                       </button>
+*** End Patch
