@@ -18,7 +18,6 @@ export const config = {
 
 // List of paths that don't require authentication
 const publicPaths = [
-  '/api',
   '/_next',
   '/favicon.ico',
   '/public',
@@ -28,6 +27,16 @@ const publicPaths = [
   '/',  // Home page is public
   '/share', // Public share links
   '/verify-email', // Email verification page
+];
+
+// List of API paths that don't require authentication (very limited)
+const publicApiPaths = [
+  '/api/auth/session',
+  '/api/auth/signout', 
+  '/api/auth/manual-verify',
+  '/api/share', // Public share access
+  '/api/admin/email-settings', // Public settings for home page
+  '/api/onboarding-settings', // Public onboarding settings
 ];
 
 // List of admin-only paths
@@ -49,6 +58,11 @@ export async function middleware(request: NextRequest) {
   
   // Check if current path is public
   const isPublicPath = publicPaths.some(path => 
+    pathname === path || pathname.startsWith(`${path}/`)
+  );
+  
+  // Check if API path is public (very restrictive)
+  const isPublicApiPath = pathname.startsWith('/api/') && publicApiPaths.some(path => 
     pathname === path || pathname.startsWith(`${path}/`)
   );
   
@@ -80,8 +94,8 @@ export async function middleware(request: NextRequest) {
     return response;
   }
 
-  // Allow access to public paths and home page
-  if (isPublicPath || pathname === '/') {
+  // Allow access to public paths and public API paths
+  if (isPublicPath || isPublicApiPath) {
     const response = NextResponse.next();
     response.headers.set('Cache-Control', 'no-store');
     return response;

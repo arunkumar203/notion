@@ -1,9 +1,16 @@
 import { NextResponse } from 'next/server';
 import { getBucketId, getServerAppwrite } from '@/lib/appwrite-server';
+import { verifyAuthentication } from '@/lib/auth-helpers';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
+  // Verify authentication first
+  const authResult = await verifyAuthentication();
+  if (authResult instanceof NextResponse) {
+    return authResult; // Return authentication error
+  }
+
   try {
     const bucketId = getBucketId();
     const { storage } = getServerAppwrite();

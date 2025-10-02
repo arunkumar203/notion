@@ -1,12 +1,25 @@
 import { NextResponse } from 'next/server';
 import { getBucketId } from '@/lib/appwrite-server';
 import { appwriteFetch } from '@/lib/appwrite-rest';
+import { verifyAuthentication } from '@/lib/auth-helpers';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  // Verify authentication first
+  const authResult = await verifyAuthentication();
+  if (authResult instanceof NextResponse) {
+    return authResult; // Return authentication error
+  }
+
+  const { uid } = authResult;
   const { id } = await params;
+  
   try {
+    if (!id || typeof id !== 'string') {
+      return NextResponse.json({ error: 'Invalid file ID' }, { status: 400 });
+    }
+
     const bucketId = getBucketId();
     const url = new URL(req.url);
     const q = url.search ? url.search : '';
@@ -18,6 +31,10 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     const name = url.searchParams.get('name');
     const disp = name ? `attachment; filename*=UTF-8''${encodeURIComponent(name)}` : 'attachment';
     headers.set('content-disposition', disp);
+    
+    // Log the download for security auditing
+    // console.log(`File downloaded by user ${uid}: ${id}`);
+    
     return new NextResponse(res.body, { status: 200, headers });
   } catch (e: any) {
     console.error('[files/download] error', e);
