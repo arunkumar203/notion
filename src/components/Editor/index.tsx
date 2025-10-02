@@ -102,9 +102,9 @@ class EditorErrorBoundary extends React.Component<{ children: React.ReactNode },
   }
 }
 
-const Editor = forwardRef<TiptapEditor | null, EditorProps>(({ 
-  content, 
-  onUpdate, 
+const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
+  content,
+  onUpdate,
   className = '',
   config = {},
   onEditorReady,
@@ -132,7 +132,7 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
     renamePageFromCtx = typeof nb?.renamePage === 'function' ? nb.renamePage : null;
     setPageParentFromCtx = typeof nb?.setPageParent === 'function' ? nb.setPageParent : null;
     selectedPageFromCtx = nb?.selectedPage ?? null;
-  } catch {}
+  } catch { }
   const [isMounted, setIsMounted] = useState(false);
   // Ensure we flip to mounted before paint to avoid lingering placeholder
   useLayoutEffect(() => {
@@ -169,194 +169,194 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
 
   // Build base extensions list
   const baseExtensions: AnyExtension[] = [
-      // Inline heading mark: visual-only heading for partial selections
-      Mark.create({
-        name: 'inlineHeading',
-        addAttributes() {
-          return {
-            level: { default: 1, renderHTML: (attrs: any) => ({ 'data-inline-heading': attrs.level }) },
-            fontSize: {
-              default: null,
-              parseHTML: (element: HTMLElement) => element.style?.fontSize || null,
-              renderHTML: (attrs: any) => (attrs.fontSize ? { style: `font-size: ${attrs.fontSize}` } : {}),
-            },
-          };
-        },
-        parseHTML() { return [{ tag: 'span[data-inline-heading]' }]; },
-        renderHTML({ HTMLAttributes }) {
-          const lvl = Number(HTMLAttributes['data-inline-heading']) || 1;
-          const cl = lvl === 1 ? 'inline-h1' : lvl === 2 ? 'inline-h2' : 'inline-h3';
-          return ['span', { ...HTMLAttributes, class: (HTMLAttributes.class || '') + ' ' + cl }, 0];
-        },
-      }),
-      StarterKit.configure({ 
-        codeBlock: false, 
-        code: false,
-      }),
-      Link.configure({
-        openOnClick: false,
-        autolink: true,      // keep autolink while typing
-        linkOnPaste: false,  // let our YouTube embed handle paste instead of auto-linking
-      }),
-      Placeholder.configure({
-        placeholder: ({ editor, node, pos }) => {
-          const isEmpty = !node || node.content.size === 0;
-          const name = node?.type?.name;
-          if (!isEmpty) return '';
-          let insideTable = false;
-          if (typeof pos === 'number' && editor) {
-            try {
-              const resolved = editor.state.doc.resolve(pos);
-              for (let depth = resolved.depth; depth > 0; depth--) {
-                const parent = resolved.node(depth);
-                const parentName = parent?.type?.name;
-                if (parentName === 'tableCell' || parentName === 'tableHeader' || parentName === 'tableRow') {
-                  insideTable = true;
-                  break;
-                }
+    // Inline heading mark: visual-only heading for partial selections
+    Mark.create({
+      name: 'inlineHeading',
+      addAttributes() {
+        return {
+          level: { default: 1, renderHTML: (attrs: any) => ({ 'data-inline-heading': attrs.level }) },
+          fontSize: {
+            default: null,
+            parseHTML: (element: HTMLElement) => element.style?.fontSize || null,
+            renderHTML: (attrs: any) => (attrs.fontSize ? { style: `font-size: ${attrs.fontSize}` } : {}),
+          },
+        };
+      },
+      parseHTML() { return [{ tag: 'span[data-inline-heading]' }]; },
+      renderHTML({ HTMLAttributes }) {
+        const lvl = Number(HTMLAttributes['data-inline-heading']) || 1;
+        const cl = lvl === 1 ? 'inline-h1' : lvl === 2 ? 'inline-h2' : 'inline-h3';
+        return ['span', { ...HTMLAttributes, class: (HTMLAttributes.class || '') + ' ' + cl }, 0];
+      },
+    }),
+    StarterKit.configure({
+      codeBlock: false,
+      code: false,
+    }),
+    Link.configure({
+      openOnClick: false,
+      autolink: true,      // keep autolink while typing
+      linkOnPaste: false,  // let our YouTube embed handle paste instead of auto-linking
+    }),
+    Placeholder.configure({
+      placeholder: ({ editor, node, pos }) => {
+        const isEmpty = !node || node.content.size === 0;
+        const name = node?.type?.name;
+        if (!isEmpty) return '';
+        let insideTable = false;
+        if (typeof pos === 'number' && editor) {
+          try {
+            const resolved = editor.state.doc.resolve(pos);
+            for (let depth = resolved.depth; depth > 0; depth--) {
+              const parent = resolved.node(depth);
+              const parentName = parent?.type?.name;
+              if (parentName === 'tableCell' || parentName === 'tableHeader' || parentName === 'tableRow') {
+                insideTable = true;
+                break;
               }
-            } catch {
-              insideTable = false;
             }
+          } catch {
+            insideTable = false;
           }
-          if (insideTable) return '';
-          if (name === 'paragraph' || name === 'listItem') {
-            return 'Press space for AI, / for commands';
-          }
-          return '';
-        },
-        showOnlyCurrent: true,
-        includeChildren: true,
-      }),
-      Underline,
-      Highlight,
-      TaskList,
-      TaskItem.configure({ nested: true }),
-      TextAlign.configure({ types: ['heading', 'paragraph'] }),
-  // Replace default Image with resizable image node view
-  (ResizableImage as unknown as AnyExtension),
-      // Persisted inline nodes (file/page)
-      (FileLink as unknown as AnyExtension),
-      (PageLink as unknown as AnyExtension),
-      CharacterCount,
-  // YouTube embeds (paste a YouTube/Shorts URL, or use slash command)
-  (YouTube as unknown as AnyExtension),
-      ...KanbanExtensions,
-      // Custom table extension with advanced features
-      (TableExtension as unknown as AnyExtension),
-      CodeBlockLowlight.configure({
-        lowlight,
-        HTMLAttributes: { 
-          class: 'hljs', 
-          spellcheck: 'false',
-        },
-      }),
-      TextStyle,
-      // Enable rendering of fontSize attribute on textStyle mark
-      Extension.create({
-        name: 'fontSize',
-        addGlobalAttributes() {
-          return [
-            {
-              types: ['textStyle'],
-              attributes: {
-                fontSize: {
-                  default: null,
-                  parseHTML: (element: HTMLElement) => element.style?.fontSize || null,
-                  renderHTML: (attrs: any) => (attrs.fontSize ? { style: `font-size: ${attrs.fontSize}` } : {}),
-                },
+        }
+        if (insideTable) return '';
+        if (name === 'paragraph' || name === 'listItem') {
+          return 'Press space for AI, / for commands';
+        }
+        return '';
+      },
+      showOnlyCurrent: true,
+      includeChildren: true,
+    }),
+    Underline,
+    Highlight,
+    TaskList,
+    TaskItem.configure({ nested: true }),
+    TextAlign.configure({ types: ['heading', 'paragraph'] }),
+    // Replace default Image with resizable image node view
+    (ResizableImage as unknown as AnyExtension),
+    // Persisted inline nodes (file/page)
+    (FileLink as unknown as AnyExtension),
+    (PageLink as unknown as AnyExtension),
+    CharacterCount,
+    // YouTube embeds (paste a YouTube/Shorts URL, or use slash command)
+    (YouTube as unknown as AnyExtension),
+    ...KanbanExtensions,
+    // Custom table extension with advanced features
+    (TableExtension as unknown as AnyExtension),
+    CodeBlockLowlight.configure({
+      lowlight,
+      HTMLAttributes: {
+        class: 'hljs',
+        spellcheck: 'false',
+      },
+    }),
+    TextStyle,
+    // Enable rendering of fontSize attribute on textStyle mark
+    Extension.create({
+      name: 'fontSize',
+      addGlobalAttributes() {
+        return [
+          {
+            types: ['textStyle'],
+            attributes: {
+              fontSize: {
+                default: null,
+                parseHTML: (element: HTMLElement) => element.style?.fontSize || null,
+                renderHTML: (attrs: any) => (attrs.fontSize ? { style: `font-size: ${attrs.fontSize}` } : {}),
               },
             },
-          ];
-        },
-      }),
-      // Allow optional fontWeight on textStyle so we can keep handwriting fonts at their native weight
-      Extension.create({
-        name: 'fontWeightAttr',
-        addGlobalAttributes() {
-          return [
-            {
-              types: ['textStyle'],
-              attributes: {
-                fontWeight: {
-                  default: null,
-                  parseHTML: (element: HTMLElement) => element.style?.fontWeight || null,
-                  renderHTML: (attrs: any) => (attrs.fontWeight ? { style: `font-weight: ${attrs.fontWeight}` } : {}),
-                },
+          },
+        ];
+      },
+    }),
+    // Allow optional fontWeight on textStyle so we can keep handwriting fonts at their native weight
+    Extension.create({
+      name: 'fontWeightAttr',
+      addGlobalAttributes() {
+        return [
+          {
+            types: ['textStyle'],
+            attributes: {
+              fontWeight: {
+                default: null,
+                parseHTML: (element: HTMLElement) => element.style?.fontWeight || null,
+                renderHTML: (attrs: any) => (attrs.fontWeight ? { style: `font-weight: ${attrs.fontWeight}` } : {}),
               },
             },
-          ];
-        },
-      }),
-      Color.configure({ types: ['textStyle'] }),
-  // Allow font-family mark on text via TextStyle
-  FontFamily,
-      Code.configure({ 
-        HTMLAttributes: { 
-          spellcheck: 'false' 
-        } 
-      }),
-      // Custom: Backspace on empty list item should clear the bullet/number/checkbox and stay on the same line (paragraph)
-      Extension.create({
-        name: 'listBackspaceFix',
-        priority: 1000,
-        addKeyboardShortcuts() {
-          return {
-            Backspace: () => {
-              const editor = this.editor;
-              const state = editor.state;
-              const sel = state.selection as Selection & { $from: any };
-              if (!sel.empty) return false;
-              const $from = sel.$from;
-              const parent = $from.parent;
-              if (!parent || !parent.isTextblock) return false;
-              const isEmpty = parent.content.size === 0; // empty paragraph inside list item
-              if (!isEmpty) return false;
-              // Find nearest list item ancestor (bulleted/numbered/task)
-              let itemDepth: number | null = null;
-              for (let d = $from.depth; d > 0; d--) {
-                const nm = $from.node(d)?.type?.name;
-                if (nm === 'listItem' || nm === 'taskItem') { itemDepth = d; break; }
+          },
+        ];
+      },
+    }),
+    Color.configure({ types: ['textStyle'] }),
+    // Allow font-family mark on text via TextStyle
+    FontFamily,
+    Code.configure({
+      HTMLAttributes: {
+        spellcheck: 'false'
+      }
+    }),
+    // Custom: Backspace on empty list item should clear the bullet/number/checkbox and stay on the same line (paragraph)
+    Extension.create({
+      name: 'listBackspaceFix',
+      priority: 1000,
+      addKeyboardShortcuts() {
+        return {
+          Backspace: () => {
+            const editor = this.editor;
+            const state = editor.state;
+            const sel = state.selection as Selection & { $from: any };
+            if (!sel.empty) return false;
+            const $from = sel.$from;
+            const parent = $from.parent;
+            if (!parent || !parent.isTextblock) return false;
+            const isEmpty = parent.content.size === 0; // empty paragraph inside list item
+            if (!isEmpty) return false;
+            // Find nearest list item ancestor (bulleted/numbered/task)
+            let itemDepth: number | null = null;
+            for (let d = $from.depth; d > 0; d--) {
+              const nm = $from.node(d)?.type?.name;
+              if (nm === 'listItem' || nm === 'taskItem') { itemDepth = d; break; }
+            }
+            if (!itemDepth) return false;
+            const listDepth = itemDepth - 1;
+            if (listDepth < 0) return false;
+            const listNode = $from.node(listDepth);
+            const listStart = $from.before(listDepth);
+            const listEnd = $from.after(listDepth);
+            const itemIndex = $from.index(listDepth);
+            if (!listNode || typeof itemIndex !== 'number') return false;
+
+            return editor.commands.command(({ tr, state, dispatch }) => {
+              const para = state.schema.nodes.paragraph.createAndFill();
+              if (!para) return false;
+              // Build before/after lists
+              const beforeItems = [] as any[];
+              for (let i = 0; i < itemIndex; i++) beforeItems.push(listNode.child(i));
+              const afterItems = [] as any[];
+              for (let i = itemIndex + 1; i < listNode.childCount; i++) afterItems.push(listNode.child(i));
+
+              const nodes: any[] = [];
+              if (beforeItems.length > 0) {
+                nodes.push(listNode.type.create(listNode.attrs, Fragment.fromArray(beforeItems)));
               }
-              if (!itemDepth) return false;
-              const listDepth = itemDepth - 1;
-              if (listDepth < 0) return false;
-              const listNode = $from.node(listDepth);
-              const listStart = $from.before(listDepth);
-              const listEnd = $from.after(listDepth);
-              const itemIndex = $from.index(listDepth);
-              if (!listNode || typeof itemIndex !== 'number') return false;
+              nodes.push(para);
+              if (afterItems.length > 0) {
+                nodes.push(listNode.type.create(listNode.attrs, Fragment.fromArray(afterItems)));
+              }
 
-              return editor.commands.command(({ tr, state, dispatch }) => {
-                const para = state.schema.nodes.paragraph.createAndFill();
-                if (!para) return false;
-                // Build before/after lists
-                const beforeItems = [] as any[];
-                for (let i = 0; i < itemIndex; i++) beforeItems.push(listNode.child(i));
-                const afterItems = [] as any[];
-                for (let i = itemIndex + 1; i < listNode.childCount; i++) afterItems.push(listNode.child(i));
-
-                const nodes: any[] = [];
-                if (beforeItems.length > 0) {
-                  nodes.push(listNode.type.create(listNode.attrs, Fragment.fromArray(beforeItems)));
-                }
-                nodes.push(para);
-                if (afterItems.length > 0) {
-                  nodes.push(listNode.type.create(listNode.attrs, Fragment.fromArray(afterItems)));
-                }
-
-                // Replace the entire list with [beforeList?, paragraph, afterList?]
-                tr.replaceWith(listStart, listEnd, Fragment.fromArray(nodes));
-                // Caret into the new paragraph
-                const paraPos = listStart + (nodes[0] && nodes[0].type === listNode.type ? nodes[0].nodeSize : 0) + 1;
-                tr.setSelection(TextSelection.create(tr.doc, Math.min(paraPos, tr.doc.content.size)));
-                if (dispatch) dispatch(tr);
-                return true;
-              });
-            },
-          };
-        },
-      }),
+              // Replace the entire list with [beforeList?, paragraph, afterList?]
+              tr.replaceWith(listStart, listEnd, Fragment.fromArray(nodes));
+              // Caret into the new paragraph
+              const paraPos = listStart + (nodes[0] && nodes[0].type === listNode.type ? nodes[0].nodeSize : 0) + 1;
+              tr.setSelection(TextSelection.create(tr.doc, Math.min(paraPos, tr.doc.content.size)));
+              if (dispatch) dispatch(tr);
+              return true;
+            });
+          },
+        };
+      },
+    }),
   ];
 
   // Combine and dedupe by extension.name (keep first occurrence)
@@ -371,22 +371,22 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
   });
 
   const editor = useEditor({
-  extensions,
+    extensions,
     content: isMounted ? content : '',
     // Explicitly disable immediate render to avoid SSR hydration mismatches (Tiptap requirement)
     immediatelyRender: false,
     editorProps: {
       attributes: {
-  class: `${className} min-h-[200px]`,
-  'data-editor-root': 'true',
+        class: `${className} min-h-[200px]`,
+        'data-editor-root': 'true',
         spellcheck: spellcheck !== false ? 'true' : 'false',
         'data-gramm': 'false',
         'data-gramm_editor': 'false',
         'data-enable-grammarly': 'false',
         autocorrect: spellcheck !== false ? 'on' : 'off',
         autocapitalize: spellcheck !== false ? 'sentences' : 'off',
-        lang: lang || ((typeof navigator !== 'undefined' && typeof navigator.language === 'string') 
-          ? (navigator.language.startsWith('en') ? 'en-US' : navigator.language) 
+        lang: lang || ((typeof navigator !== 'undefined' && typeof navigator.language === 'string')
+          ? (navigator.language.startsWith('en') ? 'en-US' : navigator.language)
           : 'en-US'),
         ...(config?.editorProps?.attributes || {}),
       },
@@ -395,7 +395,7 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
         if (ep && 'attributes' in ep) delete (ep as { attributes?: unknown }).attributes;
         return ep;
       })(),
-  handlePaste: (view, event) => {
+      handlePaste: (view, event) => {
         try {
           const e = event as ClipboardEvent;
           let text = e.clipboardData?.getData('text/plain')?.trim() || '';
@@ -407,7 +407,7 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
                 const doc = new DOMParser().parseFromString(html, 'text/html');
                 const a = doc.querySelector('a[href]') as HTMLAnchorElement | null;
                 if (a && a.href) text = a.href.trim();
-              } catch {}
+              } catch { }
             }
           }
           if (!text || !/^https?:\/\/.+$/i.test(text) || /\s/.test(text)) return false;
@@ -439,13 +439,13 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
                 }
               }
             }
-          } catch {}
+          } catch { }
           if (!id) return false;
           // Don't embed inside code blocks
           try {
             const sel = view.state.selection as Selection & { $from: any };
             let d = sel.$from.depth; while (d >= 0) { const nd = sel.$from.node(d); if (nd?.type?.name === 'codeBlock') return false; d--; }
-          } catch {}
+          } catch { }
           e.preventDefault(); e.stopPropagation();
           const type = view.state.schema.nodes['youtube'];
           if (!type) return false;
@@ -455,7 +455,7 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
           return true;
         } catch { return false; }
       },
-  handleKeyDown: (view, event) => {
+      handleKeyDown: (view, event) => {
         try {
           const key = (event as KeyboardEvent).key;
           // Don't let '/' cause IME issues or accidental browser find; let our selectionUpdate logic handle the menu
@@ -491,7 +491,7 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
               if (rootRect && coords && Number.isFinite((coords as any).left) && Number.isFinite((coords as any).bottom)) {
                 setAiPos({ left: coords.left - rootRect.left, top: coords.bottom - rootRect.top + 12 });
               }
-            } catch {}
+            } catch { }
             setAiOpen(true);
             setAiPrompt('');
             try { aiInsertPosRef.current = view.state.selection.to; } catch { aiInsertPosRef.current = null; }
@@ -544,13 +544,13 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
         } catch {
           return false;
         }
-  },
+      },
     },
     onUpdate: useCallback(({ editor: editorInstance }: { editor: TiptapEditor; transaction?: any }) => {
       // Ignore updates while not editable (view-only)
       if (!editorInstance.isEditable) return;
       // Ignore synthetic updates triggered while the slash menu is open to avoid save churn
-      try { if (slashOpenRef.current) return; } catch {}
+      try { if (slashOpenRef.current) return; } catch { }
 
       if (!onUpdate) return;
 
@@ -623,22 +623,22 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
   };
 
   const { user } = useAuth();
-  
+
   // Handle page link clicks with ownership verification
   useEffect(() => {
     const handlePageLinkClick = async (pageId: string) => {
       if (!gotoPageFromCtx) return;
-      
+
       try {
         // Verify user is authenticated
         if (!user) {
           console.error('User not authenticated');
           return;
         }
-        
+
         // Call the navigation function which includes ownership verification
         await gotoPageFromCtx(pageId);
-        
+
         // Scroll to top of the editor after navigation
         const editorElement = editor?.view.dom.closest('.editor-container');
         if (editorElement) {
@@ -695,11 +695,11 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
     const shouldSpellcheck = spellcheck !== false;
     const desired = shouldSpellcheck ? 'true' : 'false';
     const flip = desired === 'true' ? 'false' : 'true';
-  // Remember whether editor was editable (view-only should remain off)
-  const prevEditable = editor.isEditable;
+    // Remember whether editor was editable (view-only should remain off)
+    const prevEditable = editor.isEditable;
 
     // Step 1: flip to the opposite once and briefly disable editability
-    try { (root as HTMLElement).blur(); } catch {}
+    try { (root as HTMLElement).blur(); } catch { }
     editor.setEditable(false);
 
     // Apply flipped attributes to force browser re-evaluation
@@ -733,7 +733,7 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
             }
           }
         } catch { /* no-op */ }
-        try { root.dispatchEvent(new Event('input', { bubbles: true })); } catch {}
+        try { root.dispatchEvent(new Event('input', { bubbles: true })); } catch { }
         if (scrollEl) {
           scrollEl.scrollTop = scrollTop;
           scrollEl.scrollLeft = scrollLeft;
@@ -807,7 +807,7 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
       // If bad HTML crashes setContent, drop to plain text paragraph
       try {
         editor.commands.setContent(`<p>${(html || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>`, { emitUpdate: false });
-      } catch {}
+      } catch { }
     }
     // Reset dirty flag only when content comes from props
     dirtySinceProp.current = false;
@@ -878,7 +878,7 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
           const htmlNew = doc.body.innerHTML;
           editor.commands.setContent(htmlNew, { emitUpdate: true });
         }
-      } catch {}
+      } catch { }
     }, 0);
   }, [editor]);
 
@@ -933,14 +933,14 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
   // Apply spellcheck/lang changes immediately to the editor root and options
   useEffect(() => {
     if (!editor) return;
-  const ep = (editor.options.editorProps ?? {}) as { attributes?: Record<string, string> };
-  const attrs = (ep.attributes ?? {}) as Record<string, string>;
+    const ep = (editor.options.editorProps ?? {}) as { attributes?: Record<string, string> };
+    const attrs = (ep.attributes ?? {}) as Record<string, string>;
     const nextAttrs = {
       ...attrs,
       spellcheck: spellcheck === undefined ? (attrs.spellcheck ?? 'true') : (spellcheck ? 'true' : 'false'),
       autocorrect: spellcheck === false ? 'off' : 'on',
       autocapitalize: spellcheck === false ? 'off' : 'sentences',
-  lang: lang || attrs.lang || ((typeof navigator !== 'undefined' && typeof navigator.language === 'string') ? (navigator.language.startsWith('en') ? 'en-US' : navigator.language) : 'en-US'),
+      lang: lang || attrs.lang || ((typeof navigator !== 'undefined' && typeof navigator.language === 'string') ? (navigator.language.startsWith('en') ? 'en-US' : navigator.language) : 'en-US'),
     };
     editor.setOptions({
       editorProps: {
@@ -954,7 +954,7 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
       const { from, to } = editor.state.selection as Selection;
       const hadFocus = editor.isFocused;
 
-  const scrollEl = getScrollableAncestor(root);
+      const scrollEl = getScrollableAncestor(root);
       const scrollTop = scrollEl ? scrollEl.scrollTop : 0;
       const scrollLeft = scrollEl ? scrollEl.scrollLeft : 0;
 
@@ -1104,7 +1104,7 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
 
   // Keep a ref mirror for use inside stable callbacks (e.g., onUpdate)
   useEffect(() => {
-    try { slashOpenRef.current = slashOpen; } catch {}
+    try { slashOpenRef.current = slashOpen; } catch { }
   }, [slashOpen]);
 
   // Link Page popover state
@@ -1133,18 +1133,18 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
         while (cur && !s.has(cur) && hop < 50) {
           s.add(cur);
           // const parent = pagesMap.get(cur)?.parentPageId ?? null;
-            const parent: string | null | undefined = pagesMap.get(cur)?.parentPageId;
+          const parent: string | null | undefined = pagesMap.get(cur)?.parentPageId;
 
           cur = parent ?? null;
           hop++;
         }
       }
-    } catch {}
+    } catch { }
     setExcludePageIds(s);
   }, [selectedPageFromCtx, pagesFromCtx]);
   // Debounced query to prevent flickering while typing
   const [debouncedQuery, setDebouncedQuery] = useState(normalizedQuery);
-  
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedQuery(normalizedQuery);
@@ -1203,7 +1203,7 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
         .focus()
         .insertContent({ type: 'pageLink', attrs: { pageId, name } })
         .run();
-    } catch {}
+    } catch { }
   }, [editor]);
 
   const handlePickLinkItem = useCallback(async () => {
@@ -1213,11 +1213,11 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
         const p = filteredLinkPages[idx];
         setLinkBusy(true);
         setLinkBusyItemId(p.id);
-        
+
         // Insert the link immediately for better UX
         insertPageLinkAtCaret(p.id, p.name || 'Untitled');
         setLinkOpen(false);
-        
+
         // Update parent relationship in the background without blocking
         if (setPageParentFromCtx && selectedPageFromCtx && selectedPageFromCtx !== p.id) {
           // Don't await - let it happen in the background
@@ -1230,14 +1230,14 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
       if (canCreateLink && createPageFromCtx) {
         const name = (linkQuery || '').trim();
         if (!name) return;
-        
+
         setLinkBusy(true);
         setLinkCreatingName(name);
-        
+
         try {
           // Create the page first, then insert the link with the real ID
           const newId = await createPageFromCtx(name, selectedPageFromCtx || undefined);
-          
+
           if (newId) {
             // Insert the link with the real page ID
             insertPageLinkAtCaret(newId, name);
@@ -1283,6 +1283,7 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
   const [fileMenuTarget, setFileMenuTarget] = useState<{ id: string; type: 'image' | 'file' | 'page'; name?: string } | null>(null);
   const fileMenuElRef = useRef<HTMLElement | null>(null);
   const [fileMenuDropdownOpen, setFileMenuDropdownOpen] = useState(false);
+  const [fileDeleteLoading, setFileDeleteLoading] = useState(false);
   // Page link menu state
   const [pageLinkMenuOpen, setPageLinkMenuOpen] = useState(false);
   const [pageLinkMenuPos, setPageLinkMenuPos] = useState<{ left: number; top: number } | null>(null);
@@ -1296,6 +1297,7 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
     setFileMenuOpen(false);
     setFileMenuDropdownOpen(false);
     setFileMenuTarget(null);
+    setFileDeleteLoading(false);
   }, [resetKey]);
   // (Removed) File size metadata cache — no longer used; sizes are not shown anymore
   // Inline file upload at caret UI/state
@@ -1319,7 +1321,7 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
   const startUploadAnim = useCallback((fileSizeBytes: number) => {
     // Duration scales with size: ~0.8s/MB, clamped 8s..45s
     const sizeMB = Math.max(1, fileSizeBytes / (1024 * 1024));
-    uploadDurationRef.current = Math.min(45000, Math.max(8000, Math.round(sizeMB * 800))); 
+    uploadDurationRef.current = Math.min(45000, Math.max(8000, Math.round(sizeMB * 800)));
     uploadStartRef.current = null;
     uploadAnimActiveRef.current = true;
     const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
@@ -1384,7 +1386,7 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
     try {
       const end = aiEndPosRef.current;
       if (typeof end !== 'number') return;
-  let coords: any = null; try { coords = editor.view.coordsAtPos(Math.max(1, Math.min(end, editor.state.doc.content.size))); } catch {}
+      let coords: any = null; try { coords = editor.view.coordsAtPos(Math.max(1, Math.min(end, editor.state.doc.content.size))); } catch { }
       const scrollEl = containerRef.current ? getScrollableAncestor(containerRef.current) : null;
       // Keep a 25% viewport spacer below the generated content while generating
       const bottomGapRatio = 0.25;
@@ -1405,11 +1407,11 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
   }, [editor, getScrollableAncestor]);
   const stopAIInline = useCallback(() => {
     // Abort the stream and immediately hide the bar
-    try { aiAbortRef.current?.abort(); } catch {}
+    try { aiAbortRef.current?.abort(); } catch { }
     aiAbortRef.current = null;
     setAiRunning(false);
     setAiOpen(false);
-  setAiError('');
+    setAiError('');
     // If we never received a content chunk, do not show Keep/Discard; just clear anchors
     if (!aiFirstChunkRef.current) {
       setAiConfirmOpen(false);
@@ -1423,7 +1425,7 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
     try {
       if (editor && aiEndPosRef.current !== null) {
         const end = Math.max(1, Math.min(aiEndPosRef.current as number, editor.state.doc.content.size));
-  let coords: any = null; try { coords = editor.view.coordsAtPos(end); } catch {}
+        let coords: any = null; try { coords = editor.view.coordsAtPos(end); } catch { }
         const rootRect = containerRef.current?.getBoundingClientRect();
         if (rootRect) setAiConfirmPos({ left: coords.left - rootRect.left, top: coords.bottom - rootRect.top + 8 });
       }
@@ -1432,11 +1434,11 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
   }, [editor]);
   const runAIInline = useCallback(async () => {
     if (aiRunning) return;
-  const p = aiPrompt.trim();
-  if (!p) return;
-  // Reset any previous error
-  setAiError('');
-  aiFailedRef.current = false;
+    const p = aiPrompt.trim();
+    if (!p) return;
+    // Reset any previous error
+    setAiError('');
+    aiFailedRef.current = false;
     // Determine session mode and snapshot selection when rewriting
     if (aiEditSelectionRef.current && editor) {
       aiSessionModeRef.current = 'replace';
@@ -1459,9 +1461,9 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
     setAiConfirmOpen(false);
     const ctrl = new AbortController();
     aiAbortRef.current = ctrl;
-  // Classy typewriter timer handle accessible across try/finally
-  let pendingTypeTimeout: any = null;
-  const clearPending = () => { if (pendingTypeTimeout) { clearTimeout(pendingTypeTimeout); pendingTypeTimeout = null; } };
+    // Classy typewriter timer handle accessible across try/finally
+    let pendingTypeTimeout: any = null;
+    const clearPending = () => { if (pendingTypeTimeout) { clearTimeout(pendingTypeTimeout); pendingTypeTimeout = null; } };
     // Establish insertion and track range; we progressively replace [start,end] with rendered HTML
     try {
       const sel: any = editor?.state.selection as any;
@@ -1481,7 +1483,7 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
     const finalPrompt = selectedForEdit
       ? `Rewrite the following text according to these instructions: "${p}". Keep original meaning, preserve markdown formatting and code blocks, fix grammar and clarity. Output only the revised text as markdown without surrounding quotes or commentary.\n\nTEXT:\n"""\n${selectedForEdit.text}\n"""`
       : p;
-  const callGenerate = async (): Promise<Response> => {
+    const callGenerate = async (): Promise<Response> => {
       return fetch('/api/ai/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1525,12 +1527,12 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
         aiFailedRef.current = true;
         throw new Error('Failed');
       }
-  const reader = res.body.getReader();
-  const decoder = new TextDecoder();
-  // Detect streaming mode from response header set by server
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      // Detect streaming mode from response header set by server
       const xMode = (res.headers.get('X-Mode') || 'normal').toLowerCase();
       const classy = xMode === 'classy';
-  // Typewriter timings similar to the provided ChatTypewriter component
+      // Typewriter timings similar to the provided ChatTypewriter component
       // ChatGPT-like classy typing speeds (scaled ~3x faster)
       // Base very fast character delay with small natural jitter; pauses on punctuation/newlines
       const speedMultiplier = 1 / 3; // 3x faster than previous timings
@@ -1543,7 +1545,7 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
         if (ch === ' ') return 5 * speedMultiplier * jitter();
         return baseDelay * jitter();
       };
-  // use outer pendingTypeTimeout / clearPending
+      // use outer pendingTypeTimeout / clearPending
 
       // Helper: render from aiBufferRef progressively (full HTML render of whole buffer)
       const renderBuffer = () => {
@@ -1573,9 +1575,9 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
         const nextChar = classyQueue[0];
         classyQueue = classyQueue.slice(1);
         aiBufferRef.current += nextChar;
-        try { renderBuffer(); scrollEndIntoView(); } catch {}
+        try { renderBuffer(); scrollEndIntoView(); } catch { }
         // Tiny ramp-up for the first few characters for snappier feel
-  const delay = typedCount < 8 ? 0 : delayForChar(nextChar);
+        const delay = typedCount < 8 ? 0 : delayForChar(nextChar);
         typedCount++;
         pendingTypeTimeout = setTimeout(typeNext, Math.max(0, Math.round(delay)));
       };
@@ -1598,19 +1600,19 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
             enqueueTypewriter(chunk);
           } else {
             aiBufferRef.current += chunk;
-            try { renderBuffer(); scrollEndIntoView(); } catch {}
+            try { renderBuffer(); scrollEndIntoView(); } catch { }
           }
         }
       }
       // Mark stream as done and, in classy mode, wait for the typing queue to drain
       streamDone = true;
       if (classy && (typing || classyQueue.length > 0)) {
-        try { await typingDonePromise; } catch {}
+        try { await typingDonePromise; } catch { }
       }
-    } catch {}
+    } catch { }
     finally {
       // Stop any pending typewriter timeouts only if aborted
-      try { if (ctrl.signal.aborted) clearPending(); } catch {}
+      try { if (ctrl.signal.aborted) clearPending(); } catch { }
       setAiRunning(false);
       aiAbortRef.current = null;
       // Clear special edit context once finished
@@ -1620,7 +1622,7 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
         try {
           if (editor && aiEndPosRef.current !== null) {
             const end = Math.max(1, Math.min(aiEndPosRef.current as number, editor.state.doc.content.size));
-            let coords: any = null; try { coords = editor.view.coordsAtPos(end); } catch {}
+            let coords: any = null; try { coords = editor.view.coordsAtPos(end); } catch { }
             const rootRect = containerRef.current?.getBoundingClientRect();
             if (rootRect) setAiConfirmPos({ left: coords.left - rootRect.left, top: coords.bottom - rootRect.top + 8 });
           }
@@ -1638,9 +1640,9 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
         } else {
           setAiOpen(false);
         }
-  // Reset session mode/snapshot as nothing changed
-  aiSessionModeRef.current = 'insert';
-  originalSelectionHTMLRef.current = null;
+        // Reset session mode/snapshot as nothing changed
+        aiSessionModeRef.current = 'insert';
+        originalSelectionHTMLRef.current = null;
       }
       // Reset failure flag after handling
       aiFailedRef.current = false;
@@ -1674,7 +1676,7 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
     aiBufferRef.current = '';
     // Show an inline loader near the selection while transforming
     try {
-  let coords: any = null; try { coords = editor.view.coordsAtPos(to); } catch {}
+      let coords: any = null; try { coords = editor.view.coordsAtPos(to); } catch { }
       const rootRect = containerRef.current?.getBoundingClientRect();
       if (rootRect) setInlineLoaderPos({ left: coords.left - rootRect.left, top: coords.bottom - rootRect.top + 8 });
     } catch { setInlineLoaderPos(null); }
@@ -1701,7 +1703,7 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
             await fetch('/api/auth/session', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idToken }), credentials: 'include' });
             res = await callGenerate();
           }
-        } catch {}
+        } catch { }
       }
       if (!res.ok) {
         // Surface an inline error bubble near the loader position
@@ -1757,7 +1759,7 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
         const nextChar = classyQueue[0];
         classyQueue = classyQueue.slice(1);
         aiBufferRef.current += nextChar;
-        try { renderBuffer(); scrollEndIntoView(); } catch {}
+        try { renderBuffer(); scrollEndIntoView(); } catch { }
         const delay = typedCount < 8 ? 0 : delayForChar(nextChar);
         typedCount++;
         timeoutHandle = setTimeout(typeNext, Math.max(0, Math.round(delay)));
@@ -1769,22 +1771,22 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
         const chunk = decoder.decode(value);
         if (chunk) {
           if (!aiFirstChunkRef.current) { aiFirstChunkRef.current = true; setAiHasFirstChunk(true); }
-          if (classy) enqueue(chunk); else { aiBufferRef.current += chunk; try { renderBuffer(); scrollEndIntoView(); } catch {} }
+          if (classy) enqueue(chunk); else { aiBufferRef.current += chunk; try { renderBuffer(); scrollEndIntoView(); } catch { } }
         }
       }
       streamDone = true;
-      if (classy && (typing || classyQueue.length > 0)) { try { await typingDonePromise; } catch {} }
-      try { if (timeoutHandle) clearTimeout(timeoutHandle); } catch {}
-  } catch {}
+      if (classy && (typing || classyQueue.length > 0)) { try { await typingDonePromise; } catch { } }
+      try { if (timeoutHandle) clearTimeout(timeoutHandle); } catch { }
+    } catch { }
     finally {
-  setInlineLoaderOpen(false);
+      setInlineLoaderOpen(false);
       setAiRunning(false);
       aiAbortRef.current = null;
       if (aiFirstChunkRef.current) {
         try {
           if (editor && aiEndPosRef.current !== null) {
             const end = Math.max(1, Math.min(aiEndPosRef.current as number, editor.state.doc.content.size));
-            let coords: any = null; try { coords = editor.view.coordsAtPos(end); } catch {}
+            let coords: any = null; try { coords = editor.view.coordsAtPos(end); } catch { }
             const rootRect = containerRef.current?.getBoundingClientRect();
             if (rootRect) setAiConfirmPos({ left: coords.left - rootRect.left, top: coords.bottom - rootRect.top + 8 });
           }
@@ -1793,9 +1795,9 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
       } else {
         setAiConfirmOpen(false);
         setAiConfirmPos(null);
-  // Reset session mode/snapshot as nothing changed
-  aiSessionModeRef.current = 'insert';
-  originalSelectionHTMLRef.current = null;
+        // Reset session mode/snapshot as nothing changed
+        aiSessionModeRef.current = 'insert';
+        originalSelectionHTMLRef.current = null;
       }
     }
   }, [editor, aiRunning, scrollEndIntoView]);
@@ -1810,7 +1812,7 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
     const text = editor.state.doc.textBetween(from, to, '\n', '\ufffc');
     // Position the explain box near the selection (to the right of bubble if available)
     try {
-  let coords: any = null; try { coords = editor.view.coordsAtPos(to); } catch {}
+      let coords: any = null; try { coords = editor.view.coordsAtPos(to); } catch { }
       const rootRect = containerRef.current?.getBoundingClientRect();
       if (rootRect) setExplainPos({ left: Math.min(rootRect.width - 320, Math.max(8, coords.left - rootRect.left + 12)), top: coords.top - rootRect.top });
     } catch { setExplainPos({ left: 8, top: 8 }); }
@@ -1892,8 +1894,8 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
         }
       }
       streamDone = true;
-      if (classy && (typing || classyQueue.length > 0)) { try { await typingDonePromise; } catch {} }
-      try { if (timeoutHandle) clearTimeout(timeoutHandle); } catch {}
+      if (classy && (typing || classyQueue.length > 0)) { try { await typingDonePromise; } catch { } }
+      try { if (timeoutHandle) clearTimeout(timeoutHandle); } catch { }
     } catch {
       // If aborted by user, don't show a failure message
       if (!ctrl.signal.aborted) setExplainText('Failed to explain.');
@@ -1911,9 +1913,9 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
       const el = aiInputRef.current;
       if (el) {
         try { el.focus({ preventScroll: true } as any); } catch { el.focus(); }
-        try { el.select(); } catch {}
+        try { el.select(); } catch { }
         // Make sure it's visible if placed near the bottom of a scrollable area
-        try { el.scrollIntoView({ block: 'nearest' }); } catch {}
+        try { el.scrollIntoView({ block: 'nearest' }); } catch { }
         return;
       }
       if (tries < 4) {
@@ -1935,7 +1937,7 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
     const onMouseDown = (e: MouseEvent) => {
       // Only react to primary button within the editor content
       if (e.button !== 0) return;
-  setDraggingSelection(true);
+      setDraggingSelection(true);
     };
     const onMouseUp = () => setDraggingSelection(false);
     root.addEventListener('mousedown', onMouseDown, true);
@@ -1948,8 +1950,8 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
   useEffect(() => {
     if (!editor) return;
     const onSelection = () => {
-  // In view-only mode, never show the formatting bubble
-  if (!editor.isEditable) { setBubblePos(null); return; }
+      // In view-only mode, never show the formatting bubble
+      if (!editor.isEditable) { setBubblePos(null); return; }
       const { state, view } = editor;
       const sel = state.selection as Selection;
       // Hide all suggestions/bubbles when a node (e.g., image) is selected
@@ -1963,7 +1965,7 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
       setShowColorMenu(false);
       setShowBlockMenu(false);
       setShowSizeMenu(false);
-  setShowFontMenu(false);
+      setShowFontMenu(false);
       const root = containerRef.current;
       if (!root) return;
       const rect = root.getBoundingClientRect();
@@ -1971,8 +1973,8 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
         try {
           // coordsAtPos can throw if the DOM isn't fully mapped for extreme content; guard it
           let start: any = null; let end: any = null;
-          try { start = view.coordsAtPos(Math.max(1, Math.min(from, state.doc.content.size))); } catch {}
-          try { end = view.coordsAtPos(Math.max(1, Math.min(to, state.doc.content.size))); } catch {}
+          try { start = view.coordsAtPos(Math.max(1, Math.min(from, state.doc.content.size))); } catch { }
+          try { end = view.coordsAtPos(Math.max(1, Math.min(to, state.doc.content.size))); } catch { }
           if (!start || !end) { setBubblePos(null); return; }
           setBubblePos({
             left: (start.left + end.left) / 2 - rect.left,
@@ -1999,16 +2001,16 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
           if (editor.isActive('heading', { level: 2 })) { setSizeInput('24'); return; }
           if (editor.isActive('heading', { level: 3 })) { setSizeInput('20'); return; }
           setSizeInput('16');
-        } catch {}
+        } catch { }
       } else {
         setBubblePos(null);
         // Clear custom input so it falls back to effective size next time
         setSizeInput('');
       }
 
-  // Disable floating menu when just placing the caret; only show when selection is non-empty
+      // Disable floating menu when just placing the caret; only show when selection is non-empty
     };
-  editor.on('selectionUpdate', onSelection);
+    editor.on('selectionUpdate', onSelection);
     // Avoid re-running on every transaction to reduce reflows; selectionUpdate is enough for our UI
     return () => {
       editor.off('selectionUpdate', onSelection);
@@ -2018,65 +2020,65 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
   // Also react to doc updates (format changes) so the size label reflects changes instantly
   useEffect(() => {
     if (!editor) return;
-  // Keep size input in sync without touching slash menu here
-  const syncSizeLabel = () => {
-    // Don't override while the numeric size input is actively focused
-    const active = document.activeElement as HTMLElement | null;
-    if (active && bubbleRef.current && bubbleRef.current.contains(active) && (active as HTMLInputElement).type === 'number') {
-      return;
-    }
-    try {
-      const next = String(getEffectiveFontSize());
-      setSizeInput((prev) => {
-        if (prev === '') return prev; // respect empty state to fall back to computed value via prop
-        return prev === next ? prev : next;
-      });
-    } catch {}
-  };
+    // Keep size input in sync without touching slash menu here
+    const syncSizeLabel = () => {
+      // Don't override while the numeric size input is actively focused
+      const active = document.activeElement as HTMLElement | null;
+      if (active && bubbleRef.current && bubbleRef.current.contains(active) && (active as HTMLInputElement).type === 'number') {
+        return;
+      }
+      try {
+        const next = String(getEffectiveFontSize());
+        setSizeInput((prev) => {
+          if (prev === '') return prev; // respect empty state to fall back to computed value via prop
+          return prev === next ? prev : next;
+        });
+      } catch { }
+    };
 
   }, [editor]);
 
   // Close or refresh slash menu on selection changes
   useEffect(() => {
     if (!editor) return;
-  // keep ref in sync for stable callbacks (e.g., onUpdate)
-  slashOpenRef.current = slashOpen;
-  const onSelUpdate = () => {
-  // Close slash menu while read-only
-  if (!editor.isEditable) { setSlashOpen(false); return; }
+    // keep ref in sync for stable callbacks (e.g., onUpdate)
+    slashOpenRef.current = slashOpen;
+    const onSelUpdate = () => {
+      // Close slash menu while read-only
+      if (!editor.isEditable) { setSlashOpen(false); return; }
       try {
         const state = editor.state;
-  const sel = state.selection as Selection & { $from: any };
-  if (sel instanceof (NodeSelection as any)) { setSlashOpen(false); return; }
+        const sel = state.selection as Selection & { $from: any };
+        if (sel instanceof (NodeSelection as any)) { setSlashOpen(false); return; }
         if (!sel.empty || editor.isActive('codeBlock')) { setSlashOpen(false); return; }
         const $from = sel.$from;
-  let parentText = '';
-  try { parentText = $from.parent?.textBetween(0, $from.parentOffset, '\n', '\ufffc') || ''; } catch { parentText = ''; }
+        let parentText = '';
+        try { parentText = $from.parent?.textBetween(0, $from.parentOffset, '\n', '\ufffc') || ''; } catch { parentText = ''; }
         const slashAt = parentText.lastIndexOf('/');
-  const valid = slashAt >= 0 && (/\s/.test(parentText[slashAt - 1] || '') || slashAt === 0);
+        const valid = slashAt >= 0 && (/\s/.test(parentText[slashAt - 1] || '') || slashAt === 0);
         if (!valid) { setSlashOpen(false); return; }
         const query = parentText.slice(slashAt + 1);
-  if (/\s/.test(query) || query.length > 32) { setSlashOpen(false); return; }
-    const toPos = state.selection.from;
-    let fromPos = 0;
-    try { fromPos = ($from.start() as number) + slashAt; } catch { fromPos = 0; }
-    if (!Number.isFinite(fromPos) || !Number.isFinite(toPos) || !(fromPos < toPos)) { setSlashOpen(false); setSlashRange(null); return; }
-    const { view } = (editor as any);
-    let coords: { left: number; top: number } | null = null;
-    try { coords = view.coordsAtPos(toPos); } catch { coords = null; }
-    if (!coords || !Number.isFinite(coords.left) || !Number.isFinite(coords.top)) { setSlashOpen(false); return; }
-    const rootRect = containerRef.current?.getBoundingClientRect();
-    if (!rootRect) { setSlashOpen(false); return; }
-    setSlashPos({ left: coords.left - rootRect.left, top: coords.top - rootRect.top + 18 });
-  setSlashRange({ from: fromPos, to: toPos });
+        if (/\s/.test(query) || query.length > 32) { setSlashOpen(false); return; }
+        const toPos = state.selection.from;
+        let fromPos = 0;
+        try { fromPos = ($from.start() as number) + slashAt; } catch { fromPos = 0; }
+        if (!Number.isFinite(fromPos) || !Number.isFinite(toPos) || !(fromPos < toPos)) { setSlashOpen(false); setSlashRange(null); return; }
+        const { view } = (editor as any);
+        let coords: { left: number; top: number } | null = null;
+        try { coords = view.coordsAtPos(toPos); } catch { coords = null; }
+        if (!coords || !Number.isFinite(coords.left) || !Number.isFinite(coords.top)) { setSlashOpen(false); return; }
+        const rootRect = containerRef.current?.getBoundingClientRect();
+        if (!rootRect) { setSlashOpen(false); return; }
+        setSlashPos({ left: coords.left - rootRect.left, top: coords.top - rootRect.top + 18 });
+        setSlashRange({ from: fromPos, to: toPos });
         setSlashQuery(query);
         setSlashIndex(0);
         setSlashOpen(true);
-  // Anchor enhancement is handled separately on updates/mutations; keep selection handler focused on slash menu only
+        // Anchor enhancement is handled separately on updates/mutations; keep selection handler focused on slash menu only
       } catch { setSlashOpen(false); }
     };
-  editor.on('selectionUpdate', onSelUpdate);
-  return () => { editor.off('selectionUpdate', onSelUpdate); };
+    editor.on('selectionUpdate', onSelUpdate);
+    return () => { editor.off('selectionUpdate', onSelUpdate); };
   }, [editor]);
 
   // Close slash menu on outside clicks (outside editor content and outside menu)
@@ -2260,10 +2262,10 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
     if (!next || !next.trim()) return;
     try {
       // First, rename the actual page entity via context if available
-      try { if (renamePageFromCtx) await renamePageFromCtx(pageLinkMenuTarget.id, next.trim()); } catch {}
+      try { if (renamePageFromCtx) await renamePageFromCtx(pageLinkMenuTarget.id, next.trim()); } catch { }
       // Update document text for page link
       const root = (editor as any).view.dom;
-  const anchors = Array.from(root.querySelectorAll(`a[data-page-id="${pageLinkMenuTarget.id}"] , a[href="#page:${pageLinkMenuTarget.id}"] , a[title="page:${pageLinkMenuTarget.id}"]`)) as HTMLAnchorElement[];
+      const anchors = Array.from(root.querySelectorAll(`a[data-page-id="${pageLinkMenuTarget.id}"] , a[href="#page:${pageLinkMenuTarget.id}"] , a[title="page:${pageLinkMenuTarget.id}"]`)) as HTMLAnchorElement[];
       for (const a of anchors) {
         const text = a.textContent || '';
         const view: any = (editor as any).view;
@@ -2272,7 +2274,7 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
         const href = a.getAttribute('href') || a.href || `#page:${pageLinkMenuTarget.id}`;
         editor.chain().focus().setTextSelection({ from, to }).insertContent([{ type: 'text', text: next.trim(), marks: [{ type: 'link', attrs: { href } }] }]).run();
       }
-    } catch {}
+    } catch { }
   }, [pageLinkMenuTarget, editor]);
 
   // Page link delete (delete page and all child pages)
@@ -2284,7 +2286,7 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
       if (deletePageFromCtx) await deletePageFromCtx(pageLinkMenuTarget.id);
       // Remove all page links from editor content
       const root = (editor as any).view.dom;
-  const anchors = Array.from(root.querySelectorAll(`a[data-page-id="${pageLinkMenuTarget.id}"] , a[href="#page:${pageLinkMenuTarget.id}"] , a[title="page:${pageLinkMenuTarget.id}"]`)) as HTMLAnchorElement[];
+      const anchors = Array.from(root.querySelectorAll(`a[data-page-id="${pageLinkMenuTarget.id}"] , a[href="#page:${pageLinkMenuTarget.id}"] , a[title="page:${pageLinkMenuTarget.id}"]`)) as HTMLAnchorElement[];
       for (const a of anchors) {
         const text = a.textContent || '';
         const view: any = (editor as any).view;
@@ -2294,7 +2296,7 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
         const tr = state.tr.delete(from, to);
         dispatch(tr);
       }
-    } catch {}
+    } catch { }
     setPageLinkMenuOpen(false);
     setPageLinkMenuTarget(null);
     setPageLinkMenuDropdownOpen(false);
@@ -2399,7 +2401,7 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
         // Debounce per id
         pendingRenameNameRef.current[id] = text;
         if (renameTimersRef.current[id]) {
-          try { clearTimeout(renameTimersRef.current[id]); } catch {}
+          try { clearTimeout(renameTimersRef.current[id]); } catch { }
         }
         renameTimersRef.current[id] = setTimeout(async () => {
           try {
@@ -2411,7 +2413,7 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
             if (renamePageFromCtx) await renamePageFromCtx(id, pending);
           } catch { /* ignore */ }
           finally {
-            try { clearTimeout(renameTimersRef.current[id]); } catch {}
+            try { clearTimeout(renameTimersRef.current[id]); } catch { }
             delete renameTimersRef.current[id];
           }
         }, 200);
@@ -2451,12 +2453,12 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
 
     try {
       observer.observe(root, { subtree: true, characterData: true, childList: true, attributes: true });
-    } catch {}
+    } catch { }
     return () => {
-      try { observer.disconnect(); } catch {}
+      try { observer.disconnect(); } catch { }
       const timers = renameTimersRef.current;
       for (const id of Object.keys(timers)) {
-        try { clearTimeout(timers[id]); } catch {}
+        try { clearTimeout(timers[id]); } catch { }
         delete timers[id];
       }
     };
@@ -2488,8 +2490,8 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
             // Clear any timer and flush immediately
             try {
               if (renameTimersRef.current[prevId]) { clearTimeout(renameTimersRef.current[prevId]); delete renameTimersRef.current[prevId]; }
-            } catch {}
-            renamePageFromCtx(prevId, pending).catch(() => {});
+            } catch { }
+            renamePageFromCtx(prevId, pending).catch(() => { });
             delete pendingRenameNameRef.current[prevId];
           }
         }
@@ -2511,8 +2513,8 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
         for (const id of Object.keys(pendingRenameNameRef.current)) {
           const name = (pendingRenameNameRef.current[id] || '').trim();
           if (!name) continue;
-          try { if (timers[id]) { clearTimeout(timers[id]); delete timers[id]; } } catch {}
-          if (renamePageFromCtx) { renamePageFromCtx(id, name).catch(() => {}); }
+          try { if (timers[id]) { clearTimeout(timers[id]); delete timers[id]; } } catch { }
+          if (renamePageFromCtx) { renamePageFromCtx(id, name).catch(() => { }); }
           delete pendingRenameNameRef.current[id];
         }
       } catch { /* ignore */ }
@@ -2555,38 +2557,53 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
             .setTextSelection({ from, to })
             .insertContent([{ type: 'text', text: next.trim(), marks: [{ type: 'link', attrs: { href } }] }])
             .run();
-        } catch {}
+        } catch { }
       }
-    } catch {}
+    } catch { }
   }, [fileMenuTarget, editor]);
 
   const deleteCurrentAttachment = useCallback(async () => {
-    if (!fileMenuTarget || !editor) return;
+    if (!fileMenuTarget || !editor || fileDeleteLoading) return;
+
     try {
       const ok = fileMenuTarget.type === 'page'
         ? confirm('Delete this page and all of its child pages?')
         : confirm('Delete this file from storage?');
       if (!ok) return;
+
+      setFileDeleteLoading(true);
+
       if (fileMenuTarget.type === 'file') {
+        console.log('Deleting file:', fileMenuTarget.id);
         const res = await fetch(`/api/files/${encodeURIComponent(fileMenuTarget.id)}`, { method: 'DELETE' });
-        if (!res.ok) return;
+        if (!res.ok) {
+          console.error('Failed to delete file from server:', res.status, res.statusText);
+          setFileDeleteLoading(false);
+          return;
+        }
+        console.log('File deleted from server successfully');
       } else if (fileMenuTarget.type === 'page') {
-        try { if (deletePageFromCtx) await deletePageFromCtx(fileMenuTarget.id); } catch {}
+        try {
+          if (deletePageFromCtx) await deletePageFromCtx(fileMenuTarget.id);
+        } catch (error) {
+          console.error('Failed to delete page:', error);
+          setFileDeleteLoading(false);
+          return;
+        }
       }
+
       // Remove node/link from editor content
       const view: any = (editor as any).view;
       const el = fileMenuElRef.current;
-      if (!el) return;
-      // Try to get a position near the center of the element
-      const rect = el.getBoundingClientRect();
-      const center = { left: rect.left + rect.width / 2, top: rect.top + rect.height / 2 };
-      const rootRect = containerRef.current?.getBoundingClientRect();
-      const coords = rootRect ? { left: center.left, top: center.top } : null;
-  let pos = 0;
-      try { pos = view.posAtCoords({ left: center.left, top: center.top })?.pos ?? 0; } catch { pos = 0; }
-      if (fileMenuTarget.type === 'image') {
-        // Select the node at pos if it's an image and delete
+
+      if (fileMenuTarget.type === 'image' && el) {
+        // For images, find and delete the image node
         try {
+          const rect = el.getBoundingClientRect();
+          const center = { left: rect.left + rect.width / 2, top: rect.top + rect.height / 2 };
+          let pos = 0;
+          try { pos = view.posAtCoords({ left: center.left, top: center.top })?.pos ?? 0; } catch { pos = 0; }
+
           const { state, dispatch } = view;
           const $pos = state.doc.resolve(pos);
           const node = $pos.nodeAfter || $pos.nodeBefore;
@@ -2596,29 +2613,107 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
             const to = pos + node.nodeSize;
             dispatch(tr.delete(from, to));
           }
-        } catch {}
-      } else {
-        // Delete the full link text range
+        } catch (error) {
+          console.error('Failed to remove image from editor:', error);
+        }
+      } else if (el instanceof HTMLAnchorElement) {
+        // For file links, target the fileLink node wrapper instead of just the <a> tag
         try {
-          const a = fileMenuElRef.current as HTMLAnchorElement | null;
-          if (a) {
-            const viewAny: any = (editor as any).view;
-            const from = viewAny.posAtDOM(a, 0);
-            const text = a.textContent || '';
-            const to = from + text.length;
-            const { state, dispatch } = viewAny;
-            const tr = state.tr.delete(from, to);
-            dispatch(tr);
-          } else {
-            editor.chain().focus().deleteSelection().run();
+          // Get the current HTML content
+          const currentContent = editor.getHTML();
+
+          // Create patterns to match the entire fileLink span wrapper
+          const fileId = fileMenuTarget.id;
+          const patterns = [
+            // Match the entire fileLink span that contains the file ID in href
+            new RegExp(`<span[^>]*data-file-link="true"[^>]*data-href="[^"]*${fileId}[^"]*"[^>]*>.*?</span>`, 'gi'),
+            // Alternative pattern for different attribute order
+            new RegExp(`<span[^>]*data-href="[^"]*${fileId}[^"]*"[^>]*data-file-link="true"[^>]*>.*?</span>`, 'gi'),
+            // Match span containing an anchor with the file ID
+            new RegExp(`<span[^>]*data-file-link="true"[^>]*>.*?<a[^>]*href="[^"]*${fileId}[^"]*"[^>]*>.*?</a>.*?</span>`, 'gi'),
+            // Fallback: match any span with data-file-link containing the file ID anywhere
+            new RegExp(`<span[^>]*data-file-link="true"[^>]*>[^<]*<img[^>]*>[^<]*<a[^>]*${fileId}[^>]*>.*?</a>[^<]*</span>`, 'gi')
+          ];
+
+          let newContent = currentContent;
+          let found = false;
+
+          // Try each pattern
+          for (let i = 0; i < patterns.length; i++) {
+            const pattern = patterns[i];
+            const replaced = newContent.replace(pattern, '');
+            if (replaced !== newContent) {
+              newContent = replaced;
+              found = true;
+              break;
+            }
           }
-        } catch {}
+
+          // If fileLink patterns didn't work, try the old anchor-only patterns as fallback
+          if (!found) {
+            const fallbackPatterns = [
+              // Match full anchor tag with file ID in href
+              new RegExp(`<a[^>]*href="[^"]*${fileId}[^"]*"[^>]*>.*?</a>`, 'gi'),
+              // Match anchor with download or view endpoints
+              new RegExp(`<a[^>]*href="[^"]*/api/files/(?:view|download|preview)/${fileId}[^"]*"[^>]*>.*?</a>`, 'gi')
+            ];
+
+            for (let i = 0; i < fallbackPatterns.length; i++) {
+              const pattern = fallbackPatterns[i];
+              const replaced = newContent.replace(pattern, '');
+              if (replaced !== newContent) {
+                newContent = replaced;
+                found = true;
+                break;
+              }
+            }
+          }
+
+          // If patterns didn't work, try to find and remove by text content
+          if (!found && el.textContent) {
+            const linkText = el.textContent.trim();
+            if (linkText) {
+              // Try to find and replace the specific link text within a fileLink span
+              const textPattern = new RegExp(`<span[^>]*data-file-link="true"[^>]*>.*?<a[^>]*>${linkText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}</a>.*?</span>`, 'gi');
+              const textReplaced = newContent.replace(textPattern, '');
+              if (textReplaced !== newContent) {
+                newContent = textReplaced;
+                found = true;
+              }
+            }
+          }
+
+          if (found) {
+            // Update the editor content
+            editor.commands.setContent(newContent);
+
+            // Trigger the onUpdate callback to save the changes
+            if (onUpdate) {
+              setTimeout(() => {
+                onUpdate(newContent);
+              }, 100);
+            }
+          } else {
+            // As a last resort, try to select and delete the current selection
+            try {
+              editor.chain().focus().deleteSelection().run();
+            } catch { }
+          }
+        } catch (error) {
+          console.error('Failed to remove link from editor:', error);
+        }
       }
+
+      // Close menu
       setFileMenuOpen(false);
       setFileMenuTarget(null);
       setFileMenuDropdownOpen(false);
-    } catch {}
-  }, [fileMenuTarget, editor]);
+      setFileDeleteLoading(false);
+    } catch (error) {
+      console.error('Error deleting attachment:', error);
+      setFileDeleteLoading(false);
+    }
+  }, [fileMenuTarget, editor, fileDeleteLoading, deletePageFromCtx]);
 
   // Slash command items and filtering
   const slashItems = useCallback(() => {
@@ -2633,12 +2728,13 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
       { key: 'table', label: 'Table', hint: 'Advanced table with custom columns', run: () => editor?.chain().focus().insertTable().run() },
       { key: 'kanban', label: 'Kanban board', hint: 'Status-driven columns', run: () => editor?.chain().focus().insertKanbanTable().run() },
       { key: 'code', label: 'Code block', hint: 'Monospaced code', run: () => editor?.chain().focus().toggleCodeBlock().run() },
-      { key: 'linkpage', label: 'Link page', hint: 'Link existing or new page', run: () => {
+      {
+        key: 'linkpage', label: 'Link page', hint: 'Link existing or new page', run: () => {
           if (!editor) return;
           // Position popover near caret
           try {
             const { state, view } = editor as any;
-            let coords: any = null; try { coords = view.coordsAtPos(state.selection.from); } catch {}
+            let coords: any = null; try { coords = view.coordsAtPos(state.selection.from); } catch { }
             const rootRect = containerRef.current?.getBoundingClientRect();
             if (rootRect && coords && Number.isFinite(coords.left) && Number.isFinite(coords.bottom)) {
               setLinkPos({ left: coords.left - rootRect.left, top: coords.bottom - rootRect.top + 12 });
@@ -2649,8 +2745,10 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
           setLinkQuery('');
           setLinkIndex(0);
           setLinkOpen(true);
-        } },
-      { key: 'youtube', label: 'YouTube', hint: 'Embed a YouTube video', run: () => {
+        }
+      },
+      {
+        key: 'youtube', label: 'YouTube', hint: 'Embed a YouTube video', run: () => {
           if (!editor) return;
           const url = prompt('Paste a YouTube or Shorts URL');
           if (!url) return;
@@ -2694,9 +2792,10 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
             const { id, start } = parse(url);
             if (!id) return;
             editor.chain().focus().insertContent({ type: 'youtube', attrs: { videoId: id, start } }).run();
-          } catch {}
-        } },
-  { key: 'upload', label: 'Upload file', hint: 'Attach a file', run: () => pickAndUploadAtCaret() },
+          } catch { }
+        }
+      },
+      { key: 'upload', label: 'Upload file', hint: 'Attach a file', run: () => pickAndUploadAtCaret() },
     ];
     const q = slashQuery.trim().toLowerCase();
     const list = !q ? base : base.filter(it => it.label.toLowerCase().includes(q) || it.key.includes(q));
@@ -2715,8 +2814,8 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
   // Global key handler while the slash menu is open
   useEffect(() => {
     if (!slashOpen) return;
-  let items: ReturnType<typeof slashItems> = [];
-  try { items = slashItems(); } catch { items = []; }
+    let items: ReturnType<typeof slashItems> = [];
+    try { items = slashItems(); } catch { items = []; }
     const onKey = (e: KeyboardEvent) => {
       if (!slashOpen) return;
       if (['ArrowDown', 'ArrowUp', 'Enter', 'Escape', 'Tab'].includes(e.key)) {
@@ -2732,7 +2831,7 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
         if (chosen && editor && slashRange && Number.isFinite(slashRange.from) && Number.isFinite(slashRange.to) && slashRange.from < slashRange.to) {
           // Remove the "/query" text then run/open
           if (slashRange && Number.isFinite(slashRange.from) && Number.isFinite(slashRange.to) && slashRange.from < slashRange.to) {
-            try { editor.chain().focus().deleteRange(slashRange).run(); } catch {}
+            try { editor.chain().focus().deleteRange(slashRange).run(); } catch { }
           }
           chosen.run();
         }
@@ -2780,7 +2879,7 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
     // Position bubble near current caret
     try {
       const { state, view } = editor as any;
-  let coords: any = null; try { coords = view.coordsAtPos(state.selection.from); } catch {}
+      let coords: any = null; try { coords = view.coordsAtPos(state.selection.from); } catch { }
       const rootRect = containerRef.current?.getBoundingClientRect();
       if (rootRect && coords && Number.isFinite(coords.left) && Number.isFinite(coords.bottom)) {
         setUploadPos({ left: coords.left - rootRect.left, top: coords.bottom - rootRect.top + 12 });
@@ -2806,7 +2905,7 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
     // Position bubble near caret
     try {
       const { state, view } = editor as any;
-      let coords: any = null; try { coords = view.coordsAtPos(state.selection.from); } catch {}
+      let coords: any = null; try { coords = view.coordsAtPos(state.selection.from); } catch { }
       const rootRect = containerRef.current?.getBoundingClientRect();
       if (rootRect && coords && Number.isFinite(coords.left) && Number.isFinite(coords.bottom)) {
         setUploadPos({ left: coords.left - rootRect.left, top: coords.bottom - rootRect.top + 12 });
@@ -2826,7 +2925,7 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
         const res = await fetch('/api/files/upload', { method: 'POST', body: fd });
         if (!res.ok) {
           let msg = 'Upload failed';
-          try { const j = await res.json(); msg = j?.error || msg; } catch {}
+          try { const j = await res.json(); msg = j?.error || msg; } catch { }
           throw new Error(msg);
         }
         const data = await res.json().catch(() => ({ file: null }));
@@ -2847,8 +2946,8 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
             // Insert a persisted inline fileLink node so the icon+name is saved
             chain.insertContent({ type: 'fileLink', attrs: { href: url, name, target: '_blank' } }).run();
           }
-          try { uploadInsertPosRef.current = (editor.state.selection as any)?.to ?? null; } catch {}
-        } catch {}
+          try { uploadInsertPosRef.current = (editor.state.selection as any)?.to ?? null; } catch { }
+        } catch { }
         stopUploadAnim();
         if (!mountedRef.current) break;
         setUploadProgress(100);
@@ -2885,8 +2984,8 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
         const hasFilesType = !!dt && Array.from(dt.types || []).includes('Files');
         if (!hasFilesType) return;
         e.preventDefault();
-        try { (e.dataTransfer as DataTransfer).dropEffect = 'copy'; } catch {}
-      } catch {}
+        try { (e.dataTransfer as DataTransfer).dropEffect = 'copy'; } catch { }
+      } catch { }
     };
     const onDrop = (e: DragEvent) => {
       try {
@@ -2905,7 +3004,7 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
           return;
         }
         // Ignore mixed drags (e.g., internal DnD for pages/sections/topics)
-      } catch {}
+      } catch { }
     };
     root.addEventListener('dragover', onDragOver, true);
     root.addEventListener('drop', onDrop, true);
@@ -2936,7 +3035,7 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
         } else if (url) {
           chain.insertContent({ type: 'fileLink', attrs: { href: url, name, target: '_blank' } }).run();
         }
-        try { uploadInsertPosRef.current = (editor.state.selection as any)?.to ?? null; } catch {}
+        try { uploadInsertPosRef.current = (editor.state.selection as any)?.to ?? null; } catch { }
       }
     };
     window.addEventListener('editor:insert-files', onInsert as any);
@@ -2948,13 +3047,13 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
     const el = uploadInputRef.current;
     if (!editor || !el || !el.files || el.files.length === 0) { setUploadPhase('idle'); return; }
     const file = el.files[0];
-  const MAX = 25 * 1024 * 1024; // soft cap to avoid very large client uploads
+    const MAX = 25 * 1024 * 1024; // soft cap to avoid very large client uploads
     if (file.size > MAX) {
       setUploadPhase('error');
-  setUploadError('File too large (max 25 MB)');
+      setUploadError('File too large (max 25 MB)');
       return;
     }
-  if (mountedRef.current) { setUploadPhase('uploading'); setUploadProgress(1); startUploadAnim(file.size); }
+    if (mountedRef.current) { setUploadPhase('uploading'); setUploadProgress(1); startUploadAnim(file.size); }
     try {
       const bucketId = process.env.NEXT_PUBLIC_APPWRITE_BUCKET_ID as string | undefined;
       if (!bucketId) throw new Error('Bucket not configured (NEXT_PUBLIC_APPWRITE_BUCKET_ID)');
@@ -2975,8 +3074,8 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
         } else if (url) {
           chain.insertContent({ type: 'fileLink', attrs: { href: url, name, target: '_blank' } }).run();
         }
-        try { uploadInsertPosRef.current = null; } catch {}
-      } catch {}
+        try { uploadInsertPosRef.current = null; } catch { }
+      } catch { }
       if (mountedRef.current) {
         stopUploadAnim();
         setUploadProgress(100);
@@ -2986,7 +3085,7 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
           setUploadPhase('idle');
           setUploadPos(null);
           setUploadError('');
-          try { if (uploadInputRef.current) uploadInputRef.current.value = ''; } catch {}
+          try { if (uploadInputRef.current) uploadInputRef.current.value = ''; } catch { }
         }, 800);
       }
     } catch (e: any) {
@@ -3003,7 +3102,7 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
   }, [editor]);
 
   // Cleanup animation on unmount
-  useEffect(() => () => { try { stopUploadAnim(); } catch {} }, [stopUploadAnim]);
+  useEffect(() => () => { try { stopUploadAnim(); } catch { } }, [stopUploadAnim]);
 
   // Close bubble on outside click
   useEffect(() => {
@@ -3011,14 +3110,14 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
       if (
         bubbleRef.current && !bubbleRef.current.contains(e.target as Node)
       ) {
-  setBubblePos(null);
-  setShowSizeMenu(false);
-  setShowColorMenu(false);
-  setShowBlockMenu(false);
-  setShowFontMenu(false);
-  setSizeInput('');
-  setShowAiMenu(false);
-  setShowToneMenu(false);
+        setBubblePos(null);
+        setShowSizeMenu(false);
+        setShowColorMenu(false);
+        setShowBlockMenu(false);
+        setShowFontMenu(false);
+        setSizeInput('');
+        setShowAiMenu(false);
+        setShowToneMenu(false);
       }
     };
     document.addEventListener('mousedown', onDown);
@@ -3028,11 +3127,11 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
   // Helper: label for current block type
   const currentBlockLabel = () => {
     if (!editor) return 'Text';
-  // If an inline heading mark is active, reflect it
-  const ih = editor.getAttributes('inlineHeading');
-  if (ih && ih.level === 1) return 'Heading 1';
-  if (ih && ih.level === 2) return 'Heading 2';
-  if (ih && ih.level === 3) return 'Heading 3';
+    // If an inline heading mark is active, reflect it
+    const ih = editor.getAttributes('inlineHeading');
+    if (ih && ih.level === 1) return 'Heading 1';
+    if (ih && ih.level === 2) return 'Heading 2';
+    if (ih && ih.level === 3) return 'Heading 3';
     if (editor.isActive('heading', { level: 1 })) return 'Heading 1';
     if (editor.isActive('heading', { level: 2 })) return 'Heading 2';
     if (editor.isActive('heading', { level: 3 })) return 'Heading 3';
@@ -3049,10 +3148,10 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
     if (!editor) return defaultSizes.paragraph;
     const ts = editor.getAttributes('textStyle');
     const fs = ts?.fontSize ? parseInt(String(ts.fontSize), 10) : undefined;
-  if (Number.isFinite(fs)) return fs as number;
-  const ihSize = editor.getAttributes('inlineHeading')?.fontSize;
-  const fs2 = ihSize ? parseInt(String(ihSize), 10) : undefined;
-  if (Number.isFinite(fs2)) return fs2 as number;
+    if (Number.isFinite(fs)) return fs as number;
+    const ihSize = editor.getAttributes('inlineHeading')?.fontSize;
+    const fs2 = ihSize ? parseInt(String(ihSize), 10) : undefined;
+    if (Number.isFinite(fs2)) return fs2 as number;
     const ih = editor.getAttributes('inlineHeading');
     if (ih?.level === 1) return defaultSizes.h1;
     if (ih?.level === 2) return defaultSizes.h2;
@@ -3124,10 +3223,10 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
           console.info('[Editor] Font already available:', simple);
           return true;
         }
-      } catch {}
+      } catch { }
 
       // Inject Google Fonts stylesheet if needed
-    if (entry?.google) {
+      if (entry?.google) {
         // Preconnects to speed up & improve reliability
         const addPreconnect = (href: string, cross: boolean) => {
           const id = `preconnect-${href.replace(/[^a-z0-9]/gi, '-')}`;
@@ -3147,9 +3246,9 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
           link.id = id;
           link.rel = 'stylesheet';
           const gf = simple.replace(/\s+/g, '+');
-      // Handwriting fonts often only ship 400; request minimal weights to avoid odd fallbacks
-      const weights = entry.group === 'handwriting' ? 'wght@400' : 'wght@400;600;700';
-      link.href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(gf)}:${weights}&display=swap`;
+          // Handwriting fonts often only ship 400; request minimal weights to avoid odd fallbacks
+          const weights = entry.group === 'handwriting' ? 'wght@400' : 'wght@400;600;700';
+          link.href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(gf)}:${weights}&display=swap`;
           document.head.appendChild(link);
           console.info('[Editor] Injected Google Fonts stylesheet for', simple, link.href);
         }
@@ -3219,7 +3318,7 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
       } else {
         chain.updateAttributes('textStyle', { fontWeight: null as any });
       }
-    } catch {}
+    } catch { }
     chain.run();
     // Debug: log computed font actually rendered at selection start
     try {
@@ -3240,10 +3339,10 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
             chk400 = (document as any).fonts.check(`400 14px "${simple}"`);
             chk700 = (document as any).fonts.check(`700 14px "${simple}"`);
           }
-        } catch {}
+        } catch { }
         console.info('[Editor] Rendered font after apply:', { requested: name, css, fam, wt, font, available: { w400: chk400, w700: chk700 } });
       }
-    } catch {}
+    } catch { }
     if (!loaded) {
       // Attempt a post-load refresh if the font finishes a bit later
       try {
@@ -3256,12 +3355,12 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
                 ch.setTextSelection({ from: s.from, to: s.to });
               }
               ch.setFontFamily(css);
-              if (isHand) { try { ch.updateAttributes('textStyle', { fontWeight: '400' }); } catch {} }
+              if (isHand) { try { ch.updateAttributes('textStyle', { fontWeight: '400' }); } catch { } }
               ch.run();
-            } catch {}
+            } catch { }
           });
         }
-      } catch {}
+      } catch { }
     }
     setShowFontMenu(false);
   };
@@ -3305,14 +3404,14 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
 
     // Inline fallback: emulate a heading visually without changing block structure.
     // Toggle if the same level is already applied.
-  const activeLevel = editor.getAttributes('inlineHeading')?.level;
-  const chain = editor.chain().focus();
+    const activeLevel = editor.getAttributes('inlineHeading')?.level;
+    const chain = editor.chain().focus();
     if (activeLevel === level) {
       chain.unsetMark('inlineHeading').run();
     } else {
       chain.unsetMark('inlineHeading').setMark('inlineHeading', { level }).run();
     }
-  requestAnimationFrame(() => setSizeInput(String(getEffectiveFontSize())));
+    requestAnimationFrame(() => setSizeInput(String(getEffectiveFontSize())));
   };
 
   // Convert current block to plain paragraph, unwrapping lists/tasks/code if active
@@ -3356,12 +3455,12 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
     }
 
     // Block-level conversions for whole block or when not in heading
-  if (editor.isActive('taskList')) { chain.toggleTaskList().run(); requestAnimationFrame(() => setSizeInput(String(getEffectiveFontSize()))); return; }
-  if (editor.isActive('bulletList')) { chain.toggleBulletList().run(); requestAnimationFrame(() => setSizeInput(String(getEffectiveFontSize()))); return; }
-  if (editor.isActive('orderedList')) { chain.toggleOrderedList().run(); requestAnimationFrame(() => setSizeInput(String(getEffectiveFontSize()))); return; }
-  if (editor.isActive('codeBlock')) { chain.toggleCodeBlock().run(); requestAnimationFrame(() => setSizeInput(String(getEffectiveFontSize()))); return; }
-  chain.setParagraph().run();
-  requestAnimationFrame(() => setSizeInput(String(getEffectiveFontSize())));
+    if (editor.isActive('taskList')) { chain.toggleTaskList().run(); requestAnimationFrame(() => setSizeInput(String(getEffectiveFontSize()))); return; }
+    if (editor.isActive('bulletList')) { chain.toggleBulletList().run(); requestAnimationFrame(() => setSizeInput(String(getEffectiveFontSize()))); return; }
+    if (editor.isActive('orderedList')) { chain.toggleOrderedList().run(); requestAnimationFrame(() => setSizeInput(String(getEffectiveFontSize()))); return; }
+    if (editor.isActive('codeBlock')) { chain.toggleCodeBlock().run(); requestAnimationFrame(() => setSizeInput(String(getEffectiveFontSize()))); return; }
+    chain.setParagraph().run();
+    requestAnimationFrame(() => setSizeInput(String(getEffectiveFontSize())));
   };
 
   // Preprocess markdown before parsing:
@@ -3499,7 +3598,7 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
       const done = (ok: boolean) => { if (!settled) { settled = true; resolve(ok); } };
       img.onload = () => done(true);
       img.onerror = () => done(false);
-      try { img.referrerPolicy = 'no-referrer'; } catch {}
+      try { img.referrerPolicy = 'no-referrer'; } catch { }
       img.src = url;
       setTimeout(() => done(false), timeoutMs);
     });
@@ -3546,996 +3645,1015 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
   };
 
   return (
-  <EditorErrorBoundary>
-    <div ref={containerRef} className={`${className} editor-container relative`}>
-      {/* Removed the floating word count display */}
-      {/* drag-guide overlay removed */}
-  {editor.isEditable && bubblePos && (
-        <div
-          ref={bubbleRef}
-          className={`absolute z-50 bg-white/95 backdrop-blur-sm border border-gray-200 shadow-md rounded-md p-1 cursor-default select-none ${draggingSelection ? 'pointer-events-none' : ''}`}
-          style={{ top: bubblePos.top, left: bubblePos.left, transform: 'translateX(-50%)' }}
-          onMouseDown={(e) => {
-            const t = e.target as HTMLElement;
-            // Allow focusing inputs/selects inside the bubble (e.g., size field, color picker)
-            if (t.closest('input, textarea, select')) return;
-            // Snapshot current selection so menu clicks don't collapse it
-            try {
-              if (editor) {
-                const sel = editor.state.selection as any;
-                preservedSelectionRef.current = { from: sel.from, to: sel.to };
-              }
-            } catch {}
-            e.preventDefault();
-          }}
-        >
-          <div className="flex items-center gap-1" onMouseEnter={() => setSizeInput(String(getEffectiveFontSize()))}>
-            {/* Block type dropdown */}
-            <div className="relative">
-              <button
-                onClick={() => { setShowBlockMenu((v) => !v); setShowColorMenu(false); }}
-                className="px-2 py-1 rounded text-sm border border-gray-200 bg-white hover:bg-gray-50 inline-flex items-center gap-1 whitespace-nowrap"
-                title="Block type"
-              >
-                <span>{currentBlockLabel()}</span>
-                <span className="ml-1">▾</span>
-              </button>
-              {showBlockMenu && (
-                <div className="absolute left-0 mt-1 w-48 bg-white border border-gray-200 rounded-md shadow-lg p-1 z-50">
-                  <button className="w-full text-left px-2 py-1 rounded hover:bg-gray-100" onClick={() => { convertToParagraph(); setShowBlockMenu(false); }}>Text</button>
-                  <button className="w-full text-left px-2 py-1 rounded hover:bg-gray-100" onClick={() => { setHeadingSmart(1); setShowBlockMenu(false); }}>Heading 1</button>
-                  <button className="w-full text-left px-2 py-1 rounded hover:bg-gray-100" onClick={() => { setHeadingSmart(2); setShowBlockMenu(false); }}>Heading 2</button>
-                  <button className="w-full text-left px-2 py-1 rounded hover:bg-gray-100" onClick={() => { setHeadingSmart(3); setShowBlockMenu(false); }}>Heading 3</button>
-                  <div className="h-px bg-gray-200 my-1" />
-                  <button className="w-full text-left px-2 py-1 rounded hover:bg-gray-100 flex items-center gap-2" onClick={() => { editor.chain().focus().toggleBulletList().run(); setShowBlockMenu(false); }}><FiList /> Bulleted list</button>
-                  <button className="w-full text-left px-2 py-1 rounded hover:bg-gray-100 flex items-center gap-2" onClick={() => { editor.chain().focus().toggleOrderedList().run(); setShowBlockMenu(false); }}><FiHash /> Numbered list</button>
-                  <button className="w-full text-left px-2 py-1 rounded hover:bg-gray-100 flex items-center gap-2" onClick={() => { editor.chain().focus().toggleTaskList().run(); setShowBlockMenu(false); }}><FiCheckSquare /> To-do list</button>
-                  <div className="h-px bg-gray-200 my-1" />
-                  <button className="w-full text-left px-2 py-1 rounded hover:bg-gray-100 flex items-center gap-2" onClick={() => { editor.chain().focus().toggleCodeBlock().run(); setShowBlockMenu(false); }}><FiCode /> Code</button>
-                </div>
-              )}
-            </div>
-
-            {/* Text size control: inline editable + presets dropdown in a single box */}
-            <div className="relative">
-              <div className="flex items-center rounded border border-gray-200 bg-white">
-                <input
-                type="number"
-                min={2}
-                max={50}
-                step={2}
-                value={sizeInput || String(getEffectiveFontSize())}
-                onFocus={() => setSizeInput(String(getEffectiveFontSize()))}
-                onChange={(e) => setSizeInput(e.target.value.replace(/[^0-9]/g, ''))}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    const n = Math.max(2, Math.min(50, parseInt((sizeInput || '0'), 10)));
-                    if (!Number.isFinite(n)) return;
-                    const ch = editor.chain().focus();
-                    ch.unsetMark('textStyle').setMark('textStyle', { fontSize: `${n}px` });
-                    if (editor.isActive('inlineHeading')) {
-                      try { ch.updateAttributes('inlineHeading', { fontSize: `${n}px` }); } catch {}
-                    }
-                    ch.run();
-                    setShowSizeMenu(false);
-                    // Keep the input reflecting what was applied
-                    setSizeInput(String(n));
-                  }
-                }}
-                onBlur={() => {
-                  if (!sizeInput) return;
-                  const n = Math.max(2, Math.min(50, parseInt((sizeInput || '0'), 10)));
-                  if (!Number.isFinite(n)) return;
-                  const ch = editor.chain().focus();
-                  ch.unsetMark('textStyle').setMark('textStyle', { fontSize: `${n}px` });
-                  if (editor.isActive('inlineHeading')) {
-                    try { ch.updateAttributes('inlineHeading', { fontSize: `${n}px` }); } catch {}
-                  }
-                  ch.run();
-                  setSizeInput(String(n));
-                }}
-                className="w-[4ch] pl-2.5 pr-1 py-1.5 text-sm bg-transparent focus:outline-none input-number-nospin"
-                title="Text size"
-              />
+    <EditorErrorBoundary>
+      <div ref={containerRef} className={`${className} editor-container relative`}>
+        {/* Removed the floating word count display */}
+        {/* drag-guide overlay removed */}
+        {editor.isEditable && bubblePos && (
+          <div
+            ref={bubbleRef}
+            className={`absolute z-50 bg-white/95 backdrop-blur-sm border border-gray-200 shadow-md rounded-md p-1 cursor-default select-none ${draggingSelection ? 'pointer-events-none' : ''}`}
+            style={{ top: bubblePos.top, left: bubblePos.left, transform: 'translateX(-50%)' }}
+            onMouseDown={(e) => {
+              const t = e.target as HTMLElement;
+              // Allow focusing inputs/selects inside the bubble (e.g., size field, color picker)
+              if (t.closest('input, textarea, select')) return;
+              // Snapshot current selection so menu clicks don't collapse it
+              try {
+                if (editor) {
+                  const sel = editor.state.selection as any;
+                  preservedSelectionRef.current = { from: sel.from, to: sel.to };
+                }
+              } catch { }
+              e.preventDefault();
+            }}
+          >
+            <div className="flex items-center gap-1" onMouseEnter={() => setSizeInput(String(getEffectiveFontSize()))}>
+              {/* Block type dropdown */}
+              <div className="relative">
                 <button
-                onClick={() => {
-                  const opening = !showSizeMenu;
-                  setShowSizeMenu(opening);
-                  setShowBlockMenu(false);
-                  setShowColorMenu(false);
-                  if (opening) setSizeInput(String(getEffectiveFontSize()));
-                }}
-                className="px-2 py-1.5 text-sm bg-transparent hover:bg-gray-50"
-                title="Text size presets"
-                aria-label="Open size presets"
-              >
-                ▾
+                  onClick={() => { setShowBlockMenu((v) => !v); setShowColorMenu(false); }}
+                  className="px-2 py-1 rounded text-sm border border-gray-200 bg-white hover:bg-gray-50 inline-flex items-center gap-1 whitespace-nowrap"
+                  title="Block type"
+                >
+                  <span>{currentBlockLabel()}</span>
+                  <span className="ml-1">▾</span>
                 </button>
+                {showBlockMenu && (
+                  <div className="absolute left-0 mt-1 w-48 bg-white border border-gray-200 rounded-md shadow-lg p-1 z-50">
+                    <button className="w-full text-left px-2 py-1 rounded hover:bg-gray-100" onClick={() => { convertToParagraph(); setShowBlockMenu(false); }}>Text</button>
+                    <button className="w-full text-left px-2 py-1 rounded hover:bg-gray-100" onClick={() => { setHeadingSmart(1); setShowBlockMenu(false); }}>Heading 1</button>
+                    <button className="w-full text-left px-2 py-1 rounded hover:bg-gray-100" onClick={() => { setHeadingSmart(2); setShowBlockMenu(false); }}>Heading 2</button>
+                    <button className="w-full text-left px-2 py-1 rounded hover:bg-gray-100" onClick={() => { setHeadingSmart(3); setShowBlockMenu(false); }}>Heading 3</button>
+                    <div className="h-px bg-gray-200 my-1" />
+                    <button className="w-full text-left px-2 py-1 rounded hover:bg-gray-100 flex items-center gap-2" onClick={() => { editor.chain().focus().toggleBulletList().run(); setShowBlockMenu(false); }}><FiList /> Bulleted list</button>
+                    <button className="w-full text-left px-2 py-1 rounded hover:bg-gray-100 flex items-center gap-2" onClick={() => { editor.chain().focus().toggleOrderedList().run(); setShowBlockMenu(false); }}><FiHash /> Numbered list</button>
+                    <button className="w-full text-left px-2 py-1 rounded hover:bg-gray-100 flex items-center gap-2" onClick={() => { editor.chain().focus().toggleTaskList().run(); setShowBlockMenu(false); }}><FiCheckSquare /> To-do list</button>
+                    <div className="h-px bg-gray-200 my-1" />
+                    <button className="w-full text-left px-2 py-1 rounded hover:bg-gray-100 flex items-center gap-2" onClick={() => { editor.chain().focus().toggleCodeBlock().run(); setShowBlockMenu(false); }}><FiCode /> Code</button>
+                  </div>
+                )}
               </div>
-              {showSizeMenu && (
-                <div className="absolute left-0 mt-1 w-32 bg-white border border-gray-200 rounded-md shadow-lg z-50">
-                  <div className="max-h-64 overflow-auto p-1">
-                    <button
-                      className="w-full text-left px-2 py-1 rounded hover:bg-gray-100 text-xs"
-                      onClick={() => {
+
+              {/* Text size control: inline editable + presets dropdown in a single box */}
+              <div className="relative">
+                <div className="flex items-center rounded border border-gray-200 bg-white">
+                  <input
+                    type="number"
+                    min={2}
+                    max={50}
+                    step={2}
+                    value={sizeInput || String(getEffectiveFontSize())}
+                    onFocus={() => setSizeInput(String(getEffectiveFontSize()))}
+                    onChange={(e) => setSizeInput(e.target.value.replace(/[^0-9]/g, ''))}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        const n = Math.max(2, Math.min(50, parseInt((sizeInput || '0'), 10)));
+                        if (!Number.isFinite(n)) return;
                         const ch = editor.chain().focus();
-                        // Clear textStyle fontSize for the current selection only
-                        try { ch.updateAttributes('textStyle', { fontSize: null as any }); } catch {}
-                        // Also clear inlineHeading fontSize if present
+                        ch.unsetMark('textStyle').setMark('textStyle', { fontSize: `${n}px` });
                         if (editor.isActive('inlineHeading')) {
-                          try { ch.updateAttributes('inlineHeading', { fontSize: null as any }); } catch {}
+                          try { ch.updateAttributes('inlineHeading', { fontSize: `${n}px` }); } catch { }
                         }
                         ch.run();
                         setShowSizeMenu(false);
-                      }}
-                    >Default</button>
-                    <div className="h-px bg-gray-200 my-1" />
-                    {Array.from({ length: 25 }, (_, i) => (i + 1) * 2).map((n) => (
+                        // Keep the input reflecting what was applied
+                        setSizeInput(String(n));
+                      }
+                    }}
+                    onBlur={() => {
+                      if (!sizeInput) return;
+                      const n = Math.max(2, Math.min(50, parseInt((sizeInput || '0'), 10)));
+                      if (!Number.isFinite(n)) return;
+                      const ch = editor.chain().focus();
+                      ch.unsetMark('textStyle').setMark('textStyle', { fontSize: `${n}px` });
+                      if (editor.isActive('inlineHeading')) {
+                        try { ch.updateAttributes('inlineHeading', { fontSize: `${n}px` }); } catch { }
+                      }
+                      ch.run();
+                      setSizeInput(String(n));
+                    }}
+                    className="w-[4ch] pl-2.5 pr-1 py-1.5 text-sm bg-transparent focus:outline-none input-number-nospin"
+                    title="Text size"
+                  />
+                  <button
+                    onClick={() => {
+                      const opening = !showSizeMenu;
+                      setShowSizeMenu(opening);
+                      setShowBlockMenu(false);
+                      setShowColorMenu(false);
+                      if (opening) setSizeInput(String(getEffectiveFontSize()));
+                    }}
+                    className="px-2 py-1.5 text-sm bg-transparent hover:bg-gray-50"
+                    title="Text size presets"
+                    aria-label="Open size presets"
+                  >
+                    ▾
+                  </button>
+                </div>
+                {showSizeMenu && (
+                  <div className="absolute left-0 mt-1 w-32 bg-white border border-gray-200 rounded-md shadow-lg z-50">
+                    <div className="max-h-64 overflow-auto p-1">
                       <button
-                        key={`sz-${n}`}
-                        className="w-full text-left px-2 py-0.5 rounded hover:bg-gray-100 text-xs"
+                        className="w-full text-left px-2 py-1 rounded hover:bg-gray-100 text-xs"
                         onClick={() => {
                           const ch = editor.chain().focus();
-                          // Apply a textStyle fontSize to the current selection only
-                          ch.unsetMark('textStyle').setMark('textStyle', { fontSize: `${n}px` });
-                          // If inlineHeading is present, sync its fontSize too so inline headings reflect size
+                          // Clear textStyle fontSize for the current selection only
+                          try { ch.updateAttributes('textStyle', { fontSize: null as any }); } catch { }
+                          // Also clear inlineHeading fontSize if present
                           if (editor.isActive('inlineHeading')) {
-                            try { ch.updateAttributes('inlineHeading', { fontSize: `${n}px` }); } catch {}
+                            try { ch.updateAttributes('inlineHeading', { fontSize: null as any }); } catch { }
                           }
                           ch.run();
                           setShowSizeMenu(false);
                         }}
-                      >{n}</button>
-                    ))}
-                    {/* Note: custom value now editable in the inline field; presets remain here */}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Font family picker with search */}
-            <div className="relative">
-              <button
-                onMouseDown={() => {
-                  try {
-                    if (editor) {
-                      const sel = editor.state.selection as any;
-                      preservedSelectionRef.current = { from: sel.from, to: sel.to };
-                    }
-                  } catch {}
-                }}
-                onClick={() => {
-                  const opening = !showFontMenu;
-                  setShowFontMenu(opening);
-                  setShowBlockMenu(false);
-                  setShowColorMenu(false);
-                  setShowSizeMenu(false);
-                  setFontQuery('');
-                  if (opening) setTimeout(() => fontSearchRef.current?.focus(), 0);
-                }}
-                className="px-2 py-1 rounded text-sm border border-gray-200 bg-white hover:bg-gray-50 inline-flex items-center gap-1 whitespace-nowrap max-w-48"
-                title="Font family"
-              >
-                <span className="truncate max-w-36">{currentFontLabel()}</span>
-                <span className="ml-1">▾</span>
-              </button>
-              {showFontMenu && (
-                <div
-                  className="absolute left-0 mt-1 w-64 bg-white border border-gray-200 rounded-md shadow-lg p-1 z-50"
-                  onKeyDown={(e) => e.stopPropagation()}
-                  onMouseDown={(e) => {
-                    const t = e.target as HTMLElement;
-                    // Keep ability to focus the search input; otherwise prevent blur
-                    if (!t.closest('input, textarea, select')) {
-                      e.preventDefault();
-                    }
-                    e.stopPropagation();
-                  }}
-                >
-                  <div className="px-1 pb-1">
-                    <input
-                      ref={fontSearchRef}
-                      type="text"
-                      value={fontQuery}
-                      onChange={(e) => setFontQuery(e.target.value)}
-                      placeholder="Search fonts…"
-                      className="w-full border border-gray-200 rounded px-2 py-1 text-sm"
-                      onKeyDown={(e) => e.stopPropagation()}
-                    />
-                  </div>
-                  {/* Recent section removed as requested */}
-                  <div className="max-h-64 overflow-auto">
-                    {(() => {
-                      const q = fontQuery.trim().toLowerCase();
-                      const list = FONT_CATALOG.filter(f => f.name.toLowerCase().includes(q));
-                      const groups: Record<FontGroup, string> = { clean: 'Clean', minimal: 'Minimal', serif: 'Serif', handwriting: 'Handwriting' };
-                      (['clean','minimal','serif','handwriting'] as FontGroup[]).forEach(() => {}); // type keepalive
-                      const order: FontGroup[] = ['clean','minimal','serif','handwriting'];
-                      return (
-                        <div key="font-groups">
-                          {order.map((g) => {
-                            const items = list.filter(f => f.group === g);
-                            if (items.length === 0) return null;
-                            return (
-                              <div key={`grp-${g}`} className="mb-1">
-                                <div className="px-2 py-1 text-[11px] uppercase tracking-wide text-gray-500">{groups[g]}</div>
-                                {items.map((f) => (
-                                  <button
-                                    key={f.name}
-                                    className="w-full text-left px-2 py-1 rounded hover:bg-gray-100 flex items-center justify-between"
-                                    onClick={() => applyFontFamily(f.name)}
-                                    title={f.name}
-                                  >
-                                    <span style={{ fontFamily: f.css }} className="truncate">{f.name}</span>
-                                    {f.google ? <span className="text-[10px] text-gray-400">Google</span> : null}
-                                  </button>
-                                ))}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      );
-                    })()}
-                  </div>
-                  <div className="flex items-center justify-between mt-1 px-1">
-                    <button
-                      onClick={() => { editor.chain().focus().unsetFontFamily().run(); setShowFontMenu(false); }}
-                      className="text-xs text-gray-700 hover:underline"
-                    >Reset</button>
-                    <button
-                      onClick={() => setShowFontMenu(false)}
-                      className="text-xs text-gray-700 hover:underline"
-                    >Close</button>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="h-5 w-px bg-gray-300 mx-1" />
-
-            {/* Inline formatting */}
-            <button onClick={() => editor.chain().focus().toggleBold().run()} className={`p-1 rounded ${editor.isActive('bold') ? 'bg-gray-200' : 'hover:bg-gray-100'}`} title="Bold"><FiBold /></button>
-            <button onClick={() => editor.chain().focus().toggleItalic().run()} className={`p-1 rounded ${editor.isActive('italic') ? 'bg-gray-200' : 'hover:bg-gray-100'}`} title="Italic"><FiItalic /></button>
-            <button onClick={() => editor.chain().focus().toggleUnderline().run()} className={`p-1 rounded ${editor.isActive('underline') ? 'bg-gray-200' : 'hover:bg-gray-100'}`} title="Underline"><FiUnderline /></button>
-            <button onClick={() => editor.chain().focus().toggleStrike().run()} className={`p-1 rounded ${editor.isActive('strike') ? 'bg-gray-200' : 'hover:bg-gray-100'}`} title="Strikethrough"><TbStrikethrough /></button>
-            <button onClick={() => {
-              const prev = editor.getAttributes('link').href;
-              const url = window.prompt('URL', prev || '');
-              if (url === null) return;
-              if (url === '') {
-                editor.chain().focus().extendMarkRange('link').unsetLink().run();
-              } else {
-                editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
-              }
-            }} className={`p-1 rounded ${editor.isActive('link') ? 'bg-gray-200' : 'hover:bg-gray-100'}`} title="Link"><FiLink /></button>
-
-            {/* Text color */}
-            <div className="relative">
-              <button
-                onClick={() => { setShowColorMenu((v) => !v); setShowBlockMenu(false); }}
-                className="px-2 py-1 rounded text-sm border border-gray-200 bg-white hover:bg-gray-50 cursor-pointer inline-flex items-center gap-1 whitespace-nowrap"
-                title="Text color"
-              >
-                <span className="font-semibold" style={{ color: editor.getAttributes('textStyle')?.color || '#111827' }}>A</span>
-                <span className="ml-1">▾</span>
-              </button>
-              {showColorMenu && (
-                <div className="absolute left-0 mt-1 bg-white border border-gray-200 rounded-md shadow-lg p-2 z-50 w-64">
-                  {/* Recent */}
-                  {recentColors.length > 0 && (
-                    <div className="mb-2">
-                      <div className="text-[11px] text-gray-500 mb-1">Recent</div>
-                      <div className="grid grid-cols-8 gap-2">
-                        {recentColors.map((c) => (
-                          <button key={c} onClick={() => applyColor(c)} className="w-5 h-5 rounded cursor-pointer" style={{ backgroundColor: c }} title={c} />
-                        ))}
-                      </div>
+                      >Default</button>
+                      <div className="h-px bg-gray-200 my-1" />
+                      {Array.from({ length: 25 }, (_, i) => (i + 1) * 2).map((n) => (
+                        <button
+                          key={`sz-${n}`}
+                          className="w-full text-left px-2 py-0.5 rounded hover:bg-gray-100 text-xs"
+                          onClick={() => {
+                            const ch = editor.chain().focus();
+                            // Apply a textStyle fontSize to the current selection only
+                            ch.unsetMark('textStyle').setMark('textStyle', { fontSize: `${n}px` });
+                            // If inlineHeading is present, sync its fontSize too so inline headings reflect size
+                            if (editor.isActive('inlineHeading')) {
+                              try { ch.updateAttributes('inlineHeading', { fontSize: `${n}px` }); } catch { }
+                            }
+                            ch.run();
+                            setShowSizeMenu(false);
+                          }}
+                        >{n}</button>
+                      ))}
+                      {/* Note: custom value now editable in the inline field; presets remain here */}
                     </div>
-                  )}
-                  {/* All colors */}
-                  <div className="text-[11px] text-gray-500 mb-1">Colors</div>
-                  <div className="grid grid-cols-10 gap-2 max-h-40 overflow-auto pr-1">
-                    {uniquePalette.map((c, i) => (
-                      <button key={`${c}-${i}`} onClick={() => applyColor(c)} className="w-5 h-5 rounded border border-gray-100 cursor-pointer" style={{ backgroundColor: c }} title={c} />
-                    ))}
                   </div>
-                  <div className="flex items-center justify-between mt-2">
-                    <button
-                      onClick={() => { editor.chain().focus().unsetColor().run(); setShowColorMenu(false); }}
-                      className="text-xs text-gray-700 hover:underline cursor-pointer"
-                      title="Reset color"
-                    >Reset</button>
-                    <input
-                      type="color"
-                      className="w-6 h-6 p-0 border border-gray-200 rounded cursor-pointer"
-                      onChange={(e) => applyColor(e.target.value)}
-                      title="Custom color"
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
 
-
-            {/* AI caret actions */}
-            <div className="relative" ref={aiMenuAnchorRef}>
-              <button
-                onClick={() => { setShowAiMenu((v) => !v); setShowToneMenu(false); setShowBlockMenu(false); setShowColorMenu(false); }}
-                className="px-2 py-1 rounded text-sm border border-gray-200 bg-white hover:bg-gray-50 cursor-pointer inline-flex items-center gap-1 whitespace-nowrap"
-                title="AI actions"
-              >
-                <span>AI</span>
-                <span className="ml-1">▾</span>
-              </button>
-              {showAiMenu && (
-                <div
-                  className="absolute left-0 mt-1 w-56 bg-white border border-gray-200 rounded-md shadow-lg p-1 z-50"
-                  onMouseLeave={() => setShowToneMenu(false)}
-                >
-                  <button
-                    className="w-full text-left px-2 py-1 rounded hover:bg-gray-100"
-                    onMouseEnter={() => setShowToneMenu(false)}
-                    onClick={() => {
-                    if (!editor) return; const sel = editor.state.selection as Selection; const from = (sel as any).from; const to = (sel as any).to; if (from === to) return; const text = editor.state.doc.textBetween(from, to, '\n', '\ufffc');
-                    const prompt = `Rewrite the following text to be longer, more detailed, and clearer. Retain original meaning and keep markdown structure. Output only the rewritten text as markdown.\n\nTEXT:\n"""\n${text}\n"""`;
-                    runAITransformReplace(prompt);
-                    setShowAiMenu(false);
-                  }}>Make longer</button>
-                  <button
-                    className="w-full text-left px-2 py-1 rounded hover:bg-gray-100"
-                    onMouseEnter={() => setShowToneMenu(false)}
-                    onClick={() => {
-                    if (!editor) return; const sel = editor.state.selection as Selection; const from = (sel as any).from; const to = (sel as any).to; if (from === to) return; const text = editor.state.doc.textBetween(from, to, '\n', '\ufffc');
-                    const prompt = `Rewrite the following text to be shorter and more concise while preserving meaning. Keep essential information and markdown structure. Output only the rewritten text as markdown.\n\nTEXT:\n"""\n${text}\n"""`;
-                    runAITransformReplace(prompt);
-                    setShowAiMenu(false);
-                  }}>Make shorter</button>
-                  <button
-                    className="w-full text-left px-2 py-1 rounded hover:bg-gray-100"
-                    onMouseEnter={() => setShowToneMenu(false)}
-                    onClick={() => { runExplainForSelection(); setShowAiMenu(false); }}
-                  >Explain</button>
-                  <div className="relative">
-                    <button className="w-full text-left px-2 py-1 rounded hover:bg-gray-100" onMouseEnter={() => setShowToneMenu(true)} onClick={() => setShowToneMenu((v) => !v)}>Change tone ▸</button>
-                    {showToneMenu && (
-                      <div className="absolute top-0 left-full ml-1 w-44 bg-white border border-gray-200 rounded-md shadow-lg p-1 z-50">
-                        {['professional','casual','friendly'].map((tone) => (
-                          <button key={tone} className="w-full text-left px-2 py-1 rounded hover:bg-gray-100" onClick={() => {
-                            if (!editor) return; const sel = editor.state.selection as Selection; const from = (sel as any).from; const to = (sel as any).to; if (from === to) return; const text = editor.state.doc.textBetween(from, to, '\n', '\ufffc');
-                            const prompt = `Rewrite the following text in a ${tone} tone. Preserve meaning and keep markdown formatting. Output only the rewritten text as markdown.\n\nTEXT:\n"""\n${text}\n"""`;
-                            runAITransformReplace(prompt);
-                            setShowAiMenu(false); setShowToneMenu(false);
-                          }}>{tone[0].toUpperCase() + tone.slice(1)}</button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  <div className="h-px bg-gray-200 my-1" />
-                  <button
-                    className="w-full text-left px-2 py-1 rounded hover:bg-gray-100"
-                    onMouseEnter={() => setShowToneMenu(false)}
-                    onClick={() => {
-                    if (!editor) return; const sel = editor.state.selection as Selection; const from = (sel as any).from; const to = (sel as any).to; if (from === to) return; const text = editor.state.doc.textBetween(from, to, '\n', '\ufffc');
-                    aiEditSelectionRef.current = { from, to, text };
-                    // Open the existing AI prompt bar near the bubble position
-                    const rootRect = containerRef.current?.getBoundingClientRect();
+              {/* Font family picker with search */}
+              <div className="relative">
+                <button
+                  onMouseDown={() => {
                     try {
-                      let coords: any = null; try { coords = editor.view.coordsAtPos(to); } catch {}
-                      if (rootRect) setAiPos({ left: coords.left - rootRect.left, top: coords.bottom - rootRect.top + 12 });
-                    } catch {}
-                    setAiOpen(true);
-                    setAiPrompt('');
-                    setShowAiMenu(false);
-                    setTimeout(() => aiInputRef.current?.focus(), 0);
-                  }}>Edit…</button>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-  {/* Floating menu disabled: only show bubble menu when text is selected */}
-
-  <div
-        onPasteCapture={(e) => {
-          if (!editor) return;
-          if (!editor.isEditable) return; // block paste in view-only
-          const data = (e as React.ClipboardEvent<HTMLDivElement>).clipboardData;
-          if (!data) return;
-          const types = Array.from(data.types || []);
-          const md = data.getData('text/markdown');
-          const plain = data.getData('text/plain');
-          const source = md || plain || '';
-          // If the clipboard contains a single URL, try to extract and insert an image first
-          const maybeUrl = (source || '').trim();
-          if (/^https?:\/\/\S+$/i.test(maybeUrl)) {
-            const direct = extractDirectImageUrl(maybeUrl);
-            if (direct) {
-              e.preventDefault();
-              editor.chain().focus().setImage({ src: direct }).run();
-              return;
-            }
-            // YouTube: embed video instead of plain link
-            try {
-              const u = new URL(maybeUrl);
-              const host = u.hostname.replace(/^www\./, '');
-              let ytId: string | null = null; let start: number | null = null;
-              if (host === 'youtube.com' || host === 'm.youtube.com' || host === 'music.youtube.com') {
-                ytId = u.searchParams.get('v');
-                if (!ytId) {
-                  const m = u.pathname.match(/\/shorts\/([A-Za-z0-9_-]{6,})/);
-                  if (m) ytId = m[1];
-                }
-              } else if (host === 'youtu.be') {
-                const m = u.pathname.match(/^\/([A-Za-z0-9_-]{6,})/);
-                if (m) ytId = m[1];
-              }
-              const t = u.searchParams.get('t') || u.searchParams.get('start');
-              if (t) {
-                if (/^\d+$/.test(t)) start = parseInt(t, 10);
-                else {
-                  const m = t.match(/(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?/);
-                  if (m) {
-                    const h = m[1] ? parseInt(m[1], 10) : 0;
-                    const min = m[2] ? parseInt(m[2], 10) : 0;
-                    const s = m[3] ? parseInt(m[3], 10) : 0;
-                    start = h * 3600 + min * 60 + s;
-                  }
-                }
-              }
-              if (ytId) {
-                e.preventDefault();
-                const type = (editor as any)?.schema?.nodes?.['youtube'];
-                if (type) editor.chain().focus().insertContent({ type: 'youtube', attrs: { videoId: ytId, start } }).run();
-                else editor.chain().focus().insertContent(maybeUrl).run();
-                return;
-              }
-            } catch {}
-            // Try probing likely candidates without file extensions (e.g., googleusercontent)
-            const candidates = getCandidateImageUrls(maybeUrl);
-            if (candidates.length > 0) {
-              e.preventDefault();
-              // Limit to the first 3 candidates to avoid long delays
-              const limited = candidates.slice(0, 3);
-              (async () => {
-                for (const c of limited) {
-                  const ok = await quickLoadImage(c);
-                  if (ok) {
-                    editor.chain().focus().setImage({ src: c }).run();
-                    return;
-                  }
-                }
-                // Fallback: insert as a clickable link
-                editor
-                  .chain()
-                  .focus()
-                  .insertContent({ type: 'text', text: maybeUrl, marks: [{ type: 'link', attrs: { href: maybeUrl } }] })
-                  .run();
-              })();
-              return;
-            }
-          }
-          // If rich HTML is available and we didn't detect a direct image URL, let Tiptap handle it
-          if (types.includes('text/html')) {
-            return;
-          }
-          // Direct image URL paste -> insert as image
-          const url = (source || '').trim();
-          if (/^(https?:\/\/[^\s]+\.(png|jpe?g|gif|webp|svg))(\?[^\s]*)?$/i.test(url)) {
-            e.preventDefault();
-            editor.chain().focus().setImage({ src: url }).run();
-            return;
-          }
-          const seemsMarkdown = /(\n|^)(\s{0,3}#{1,6}\s)|(^|\n)[-*_]{3,}\s*$|(```[\s\S]*?```)|(^|\n)[0-9]+\.\s|(^|\n)[-+*]\s|(^|\n)>\s/.test(source);
-          if (seemsMarkdown) {
-            e.preventDefault();
-            const preprocessed = preprocessMarkdownForPaste(source);
-            const rendered = marked.parse(preprocessed, { breaks: true, gfm: true }) as string;
-            editor.chain().focus().insertContent(rendered).run();
-            return;
-          }
-          // If not markdown but looks like code (e.g., C++), insert as a codeBlock with detected language
-          const trimmed = (plain || '').trim();
-          if (trimmed && isLikelyCodeBlock(trimmed)) {
-            e.preventDefault();
-            const langGuess = detectLanguageFromText(trimmed) || 'cpp';
-            const text = trimmed.replace(/\r\n?/g, '\n');
-            editor
-              .chain()
-              .focus()
-              .insertContent({
-                type: 'codeBlock',
-                attrs: { language: langGuess },
-                content: [ { type: 'text', text } ],
-              })
-              .run();
-          }
-        }}
-      >
-        <EditorContent editor={editor}
-          onClickCapture={(e) => {
-            // Intercept internal page links with href like "#page:<id>"
-            const t = e.target as HTMLElement;
-            const a = t.closest('a') as HTMLAnchorElement | null;
-            if (!a) return;
-            const href = a.getAttribute('href') || '';
-            if (href.startsWith('#page:')) {
-              const pageId = href.slice('#page:'.length);
-              const evt = e as unknown as MouseEvent;
-              const isNewTab = (evt.ctrlKey || (evt as any).metaKey || evt.button === 1 || a.target === '_blank');
-              if (isNewTab) {
-                try { setFileMenuOpen(false); setFileMenuDropdownOpen(false); setFileMenuTarget(null); } catch {}
-                try { window.sessionStorage.setItem('onenot:pendingPageId', pageId); } catch {}
-                try { window.open('/notebooks', '_blank'); } catch {}
-                e.preventDefault();
-                e.stopPropagation();
-                return;
-              }
-              e.preventDefault();
-              try { setFileMenuOpen(false); setFileMenuDropdownOpen(false); setFileMenuTarget(null); } catch {}
-              try {
-                if (gotoPageFromCtx) {
-                  gotoPageFromCtx(pageId);
-                } else if (selectPageFromCtx) {
-                  selectPageFromCtx(pageId || null);
-                }
-                try { window.history.replaceState(null, '', '/notebooks'); } catch {}
-              } catch {}
-            }
-          }}
-          onAuxClickCapture={(e) => {
-            // Middle-click new-tab handler for internal page links
-            const t = e.target as unknown as HTMLElement;
-            const a = t && (t.closest ? (t.closest('a') as HTMLAnchorElement | null) : null);
-            if (!a) return;
-            const href = a.getAttribute('href') || '';
-            if (!href.startsWith('#page:')) return;
-            const pageId = href.slice('#page:'.length);
-            try { setFileMenuOpen(false); setFileMenuDropdownOpen(false); setFileMenuTarget(null); } catch {}
-            try { window.sessionStorage.setItem('onenot:pendingPageId', pageId); } catch {}
-            try { window.open('/notebooks', '_blank'); } catch {}
-            e.preventDefault();
-            e.stopPropagation();
-          }}
-        />
-  {/* Hidden input moved below; keep a single instance to avoid duplicate events */}
-      </div>
-      {/* Upload bubble at caret */}
-      {editor.isEditable && uploadPos && uploadPhase !== 'idle' && (
-        <div
-          className="absolute z-40 bg-white border border-gray-200 shadow-sm rounded-md px-2 py-1 text-xs flex items-center gap-2 not-prose"
-          style={{ left: uploadPos.left, top: uploadPos.top }}
-        >
-          {uploadPhase === 'preparing' && (
-            <>
-              <span className="inline-block w-3 h-3 mr-1 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-              <span className="text-gray-700">Preparing…</span>
-            </>
-          )}
-          {uploadPhase === 'uploading' && (
-            <>
-              <span className="inline-block w-3 h-3 mr-1 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-              <span className="text-gray-700">Uploading {uploadProgress}%</span>
-            </>
-          )}
-          {uploadPhase === 'done' && (
-            <span className="text-green-700">Uploaded</span>
-          )}
-          {uploadPhase === 'error' && (
-            <span className="text-red-700">{uploadError || 'Upload failed'}</span>
-          )}
-        </div>
-      )}
-      {/* Link Page popover */}
-      {editor.isEditable && linkOpen && (linkPos || slashPos) && (
-        <div
-          ref={linkRef}
-          className="absolute z-50 bg-white border border-gray-200 shadow-lg rounded-md overflow-hidden not-prose"
-          style={{ left: (linkPos || slashPos)!.left, top: (linkPos || slashPos)!.top }}
-          onMouseDown={(e) => { e.preventDefault(); }}
-        >
-          <div className="p-2 w-72">
-            <input
-              type="text"
-              className="border rounded px-2 py-1 text-sm w-full disabled:opacity-60"
-              placeholder={debouncedQuery !== normalizedQuery ? "Filtering..." : "Search or create page"}
-              value={linkQuery}
-              onChange={(e) => { 
-                if (!linkBusy) { 
-                  setLinkQuery(e.target.value);
-                  setLinkIndex(0); 
-                } 
-              }}
-              onKeyDown={(e) => {
-                const list = filteredLinkPages;
-                if (e.key === 'ArrowDown') {
-                  e.preventDefault();
-                  const maxIndex = canCreateLink ? list.length : Math.max(list.length - 1, 0);
-                  setLinkIndex((i) => Math.min(i + 1, Math.max(maxIndex, 0)));
-                } else if (e.key === 'ArrowUp') {
-                  e.preventDefault();
-                  setLinkIndex((i) => Math.max(i - 1, 0));
-                } else if (e.key === 'Enter') {
-                  e.preventDefault();
-                  if (!linkBusy) handlePickLinkItem();
-                } else if (e.key === 'Escape') {
-                  if (!linkBusy) setLinkOpen(false);
-                }
-              }}
-              autoFocus
-              disabled={linkBusy}
-            />
-            <div className="mt-2 max-h-60 overflow-auto">
-              {debouncedQuery !== normalizedQuery ? (
-                <div className="text-sm text-gray-500 px-1 py-1">Filtering...</div>
-              ) : ancestorNameConflict ? (
-                <div className="text-sm text-red-600 px-1 py-1">"{(linkQuery || '').trim()}" is an ancestor of this page and cannot be linked.</div>
-              ) : filteredLinkPages.length === 0 && !canCreateLink ? (
-                <div className="text-sm text-gray-500 px-1 py-1">No matches</div>
-              ) : (
-                <ul className="list-none m-0 p-0">
-                  {filteredLinkPages.map((p, i) => (
-                    <li key={p.id}>
-                      <button
-                        className={`w-full text-left px-2 py-1 text-sm rounded ${i === linkIndex ? 'bg-gray-100' : ''} ${linkBusy ? 'opacity-60 pointer-events-none' : ''}`}
-                        onMouseEnter={() => setLinkIndex(i)}
-                        onClick={() => { if (!linkBusy) { setLinkIndex(i); handlePickLinkItem(); } }}
-                      >
-                        <span className="inline-flex items-center">
-                          {p.name || 'Untitled'}
-                          {linkBusy && (linkBusyItemId === p.id || (linkCreatingName && ((p.name || 'Untitled').trim().toLowerCase() === linkCreatingName.trim().toLowerCase()))) ? (
-                            <span className="inline-block w-3 h-3 ml-2 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-                          ) : null}
-                        </span>
-                      </button>
-                    </li>
-                  ))}
-                  {canCreateLink && (
-                    <li>
-                      <button
-                        className={`w-full text-left px-2 py-1 text-sm rounded flex items-center ${linkIndex === filteredLinkPages.length ? 'bg-gray-100' : ''} ${linkBusy ? 'pointer-events-none' : ''}`}
-                        onMouseEnter={() => setLinkIndex(filteredLinkPages.length)}
-                        onClick={() => { if (!linkBusy) { setLinkIndex(filteredLinkPages.length); handlePickLinkItem(); } }}
-                      >
-                        {linkBusy ? (
-                          <>
-                            Creating "{linkCreatingName || (linkQuery || '').trim()}"…
-                            <span className="inline-block w-3 h-3 ml-2 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-                          </>
-                        ) : (
-                          <>Create new page “{(linkQuery || '').trim()}”</>
-                        )}
-                        {/* Spinner already shown next to the text above while busy */}
-                      </button>
-                    </li>
-                  )}
-                </ul>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-      {/* Slash command menu */}
-  {editor.isEditable && slashOpen && slashPos && Number.isFinite(slashPos.left as any) && Number.isFinite(slashPos.top as any) && (
-        <div
-          className="absolute z-50 bg-white border border-gray-200 shadow-lg rounded-md overflow-hidden min-w-56 not-prose"
-          style={{ left: slashPos.left, top: slashPos.top }}
-          onMouseDown={(e) => e.preventDefault()}
-          ref={slashRef}
-        >
-          {safeSlashItems.length === 0 ? (
-            <div className="px-3 py-2 text-sm text-gray-500">No matches</div>
-          ) : (
-            <ul className="max-h-64 overflow-auto list-none m-0 p-0" style={{ listStyle: 'none' }} role="listbox" aria-label="Insert block">
-              {safeSlashItems.map((it: { key: string; label: string; hint: string; run: () => void }, i: number) => (
-                <li key={it.key} role="option" aria-selected={i === slashIndex} className="m-0 p-0">
-                  <button
-                    className={`w-full text-left px-0 pr-3 py-2 text-sm flex items-center justify-between ${i === slashIndex ? 'bg-gray-100' : 'bg-white'} hover:bg-gray-50`}
-                    onMouseEnter={() => setSlashIndex(i)}
-                    onClick={() => {
-                      if (!editor) return;
-                      if (slashRange && Number.isFinite(slashRange.from) && Number.isFinite(slashRange.to) && slashRange.from < slashRange.to) {
-                        try { editor.chain().focus().deleteRange(slashRange).run(); } catch {}
+                      if (editor) {
+                        const sel = editor.state.selection as any;
+                        preservedSelectionRef.current = { from: sel.from, to: sel.to };
                       }
-                      if (it.key === 'upload') {
-                        // Trigger caret upload
-                        pickAndUploadAtCaret();
-                      } else {
-                        it.run();
+                    } catch { }
+                  }}
+                  onClick={() => {
+                    const opening = !showFontMenu;
+                    setShowFontMenu(opening);
+                    setShowBlockMenu(false);
+                    setShowColorMenu(false);
+                    setShowSizeMenu(false);
+                    setFontQuery('');
+                    if (opening) setTimeout(() => fontSearchRef.current?.focus(), 0);
+                  }}
+                  className="px-2 py-1 rounded text-sm border border-gray-200 bg-white hover:bg-gray-50 inline-flex items-center gap-1 whitespace-nowrap max-w-48"
+                  title="Font family"
+                >
+                  <span className="truncate max-w-36">{currentFontLabel()}</span>
+                  <span className="ml-1">▾</span>
+                </button>
+                {showFontMenu && (
+                  <div
+                    className="absolute left-0 mt-1 w-64 bg-white border border-gray-200 rounded-md shadow-lg p-1 z-50"
+                    onKeyDown={(e) => e.stopPropagation()}
+                    onMouseDown={(e) => {
+                      const t = e.target as HTMLElement;
+                      // Keep ability to focus the search input; otherwise prevent blur
+                      if (!t.closest('input, textarea, select')) {
+                        e.preventDefault();
                       }
-                      setSlashOpen(false);
+                      e.stopPropagation();
                     }}
                   >
-                    <span className="font-medium text-gray-800">{it.label}</span>
-                    <span className="ml-4 text-xs text-gray-500">{it.hint}</span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      )}
-      {/* AI prompt popover (separate from suggestions) */}
-  {editor.isEditable && aiOpen && (aiPos || slashPos) && (
-        <div
-          ref={aiRef}
-          className="absolute z-50 bg-white border border-gray-200 shadow-lg rounded-md overflow-hidden not-prose"
-          style={
-            aiRunning
-              ? { position: 'fixed', left: '50%', transform: 'translateX(-50%)', bottom: 24 }
-              : { left: (aiPos || slashPos)!.left, top: (aiPos || slashPos)!.top }
-          }
-          onMouseDown={(e) => {
-            const t = e.target as HTMLElement;
-            // Allow focusing the text input; prevent default elsewhere to avoid editor focus churn
-            if (t.closest('input, textarea, select')) return;
-            e.preventDefault();
-          }}
-          onMouseLeave={() => { if (!aiRunning && !aiConfirmOpen && !aiError) setAiOpen(false); }}
-        >
-          <div className="p-2 flex items-center gap-2">
-            <input
-              ref={aiInputRef}
-              type="text"
-              className="border rounded px-2 py-1 text-sm w-64"
-              placeholder="Describe what to write…"
-              value={aiPrompt}
-              onChange={(e) => { setAiPrompt(e.target.value); if (aiError) setAiError(''); }}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') runAIInline();
-                if (e.key === 'Escape') { if (!aiRunning) { setAiOpen(false); setAiPrompt(''); } }
-              }}
-              spellCheck={false}
-              disabled={aiRunning}
-              onFocus={() => { if (aiError) setAiError(''); }}
-            />
-            {!aiRunning ? (
-              <div className="flex flex-col items-start gap-1">
-                <button
-                  type="button"
-                  onClick={() => runAIInline()}
-                  className="px-2.5 py-1.5 text-xs rounded bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50"
-                  disabled={!aiPrompt.trim()}
-                >
-                  Generate
-                </button>
-                {aiError ? (
-                  <div className="text-[11px] text-red-600 leading-snug">
-                    {aiError}
+                    <div className="px-1 pb-1">
+                      <input
+                        ref={fontSearchRef}
+                        type="text"
+                        value={fontQuery}
+                        onChange={(e) => setFontQuery(e.target.value)}
+                        placeholder="Search fonts…"
+                        className="w-full border border-gray-200 rounded px-2 py-1 text-sm"
+                        onKeyDown={(e) => e.stopPropagation()}
+                      />
+                    </div>
+                    {/* Recent section removed as requested */}
+                    <div className="max-h-64 overflow-auto">
+                      {(() => {
+                        const q = fontQuery.trim().toLowerCase();
+                        const list = FONT_CATALOG.filter(f => f.name.toLowerCase().includes(q));
+                        const groups: Record<FontGroup, string> = { clean: 'Clean', minimal: 'Minimal', serif: 'Serif', handwriting: 'Handwriting' };
+                        (['clean', 'minimal', 'serif', 'handwriting'] as FontGroup[]).forEach(() => { }); // type keepalive
+                        const order: FontGroup[] = ['clean', 'minimal', 'serif', 'handwriting'];
+                        return (
+                          <div key="font-groups">
+                            {order.map((g) => {
+                              const items = list.filter(f => f.group === g);
+                              if (items.length === 0) return null;
+                              return (
+                                <div key={`grp-${g}`} className="mb-1">
+                                  <div className="px-2 py-1 text-[11px] uppercase tracking-wide text-gray-500">{groups[g]}</div>
+                                  {items.map((f) => (
+                                    <button
+                                      key={f.name}
+                                      className="w-full text-left px-2 py-1 rounded hover:bg-gray-100 flex items-center justify-between"
+                                      onClick={() => applyFontFamily(f.name)}
+                                      title={f.name}
+                                    >
+                                      <span style={{ fontFamily: f.css }} className="truncate">{f.name}</span>
+                                      {f.google ? <span className="text-[10px] text-gray-400">Google</span> : null}
+                                    </button>
+                                  ))}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        );
+                      })()}
+                    </div>
+                    <div className="flex items-center justify-between mt-1 px-1">
+                      <button
+                        onClick={() => { editor.chain().focus().unsetFontFamily().run(); setShowFontMenu(false); }}
+                        className="text-xs text-gray-700 hover:underline"
+                      >Reset</button>
+                      <button
+                        onClick={() => setShowFontMenu(false)}
+                        className="text-xs text-gray-700 hover:underline"
+                      >Close</button>
+                    </div>
                   </div>
-                ) : null}
+                )}
               </div>
-            ) : (
-              <div className="flex flex-col items-start gap-1">
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center text-xs text-gray-600">
-                    <span className="inline-block w-3 h-3 mr-1 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-                    {aiHasFirstChunk ? 'Generating…' : 'Thinking…'}
+
+              <div className="h-5 w-px bg-gray-300 mx-1" />
+
+              {/* Inline formatting */}
+              <button onClick={() => editor.chain().focus().toggleBold().run()} className={`p-1 rounded ${editor.isActive('bold') ? 'bg-gray-200' : 'hover:bg-gray-100'}`} title="Bold"><FiBold /></button>
+              <button onClick={() => editor.chain().focus().toggleItalic().run()} className={`p-1 rounded ${editor.isActive('italic') ? 'bg-gray-200' : 'hover:bg-gray-100'}`} title="Italic"><FiItalic /></button>
+              <button onClick={() => editor.chain().focus().toggleUnderline().run()} className={`p-1 rounded ${editor.isActive('underline') ? 'bg-gray-200' : 'hover:bg-gray-100'}`} title="Underline"><FiUnderline /></button>
+              <button onClick={() => editor.chain().focus().toggleStrike().run()} className={`p-1 rounded ${editor.isActive('strike') ? 'bg-gray-200' : 'hover:bg-gray-100'}`} title="Strikethrough"><TbStrikethrough /></button>
+              <button onClick={() => {
+                const prev = editor.getAttributes('link').href;
+                const url = window.prompt('URL', prev || '');
+                if (url === null) return;
+                if (url === '') {
+                  editor.chain().focus().extendMarkRange('link').unsetLink().run();
+                } else {
+                  editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
+                }
+              }} className={`p-1 rounded ${editor.isActive('link') ? 'bg-gray-200' : 'hover:bg-gray-100'}`} title="Link"><FiLink /></button>
+
+              {/* Text color */}
+              <div className="relative">
+                <button
+                  onClick={() => { setShowColorMenu((v) => !v); setShowBlockMenu(false); }}
+                  className="px-2 py-1 rounded text-sm border border-gray-200 bg-white hover:bg-gray-50 cursor-pointer inline-flex items-center gap-1 whitespace-nowrap"
+                  title="Text color"
+                >
+                  <span className="font-semibold" style={{ color: editor.getAttributes('textStyle')?.color || '#111827' }}>A</span>
+                  <span className="ml-1">▾</span>
+                </button>
+                {showColorMenu && (
+                  <div className="absolute left-0 mt-1 bg-white border border-gray-200 rounded-md shadow-lg p-2 z-50 w-64">
+                    {/* Recent */}
+                    {recentColors.length > 0 && (
+                      <div className="mb-2">
+                        <div className="text-[11px] text-gray-500 mb-1">Recent</div>
+                        <div className="grid grid-cols-8 gap-2">
+                          {recentColors.map((c) => (
+                            <button key={c} onClick={() => applyColor(c)} className="w-5 h-5 rounded cursor-pointer" style={{ backgroundColor: c }} title={c} />
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {/* All colors */}
+                    <div className="text-[11px] text-gray-500 mb-1">Colors</div>
+                    <div className="grid grid-cols-10 gap-2 max-h-40 overflow-auto pr-1">
+                      {uniquePalette.map((c, i) => (
+                        <button key={`${c}-${i}`} onClick={() => applyColor(c)} className="w-5 h-5 rounded border border-gray-100 cursor-pointer" style={{ backgroundColor: c }} title={c} />
+                      ))}
+                    </div>
+                    <div className="flex items-center justify-between mt-2">
+                      <button
+                        onClick={() => { editor.chain().focus().unsetColor().run(); setShowColorMenu(false); }}
+                        className="text-xs text-gray-700 hover:underline cursor-pointer"
+                        title="Reset color"
+                      >Reset</button>
+                      <input
+                        type="color"
+                        className="w-6 h-6 p-0 border border-gray-200 rounded cursor-pointer"
+                        onChange={(e) => applyColor(e.target.value)}
+                        title="Custom color"
+                      />
+                    </div>
                   </div>
+                )}
+              </div>
+
+
+              {/* AI caret actions */}
+              <div className="relative" ref={aiMenuAnchorRef}>
+                <button
+                  onClick={() => { setShowAiMenu((v) => !v); setShowToneMenu(false); setShowBlockMenu(false); setShowColorMenu(false); }}
+                  className="px-2 py-1 rounded text-sm border border-gray-200 bg-white hover:bg-gray-50 cursor-pointer inline-flex items-center gap-1 whitespace-nowrap"
+                  title="AI actions"
+                >
+                  <span>AI</span>
+                  <span className="ml-1">▾</span>
+                </button>
+                {showAiMenu && (
+                  <div
+                    className="absolute left-0 mt-1 w-56 bg-white border border-gray-200 rounded-md shadow-lg p-1 z-50"
+                    onMouseLeave={() => setShowToneMenu(false)}
+                  >
+                    <button
+                      className="w-full text-left px-2 py-1 rounded hover:bg-gray-100"
+                      onMouseEnter={() => setShowToneMenu(false)}
+                      onClick={() => {
+                        if (!editor) return; const sel = editor.state.selection as Selection; const from = (sel as any).from; const to = (sel as any).to; if (from === to) return; const text = editor.state.doc.textBetween(from, to, '\n', '\ufffc');
+                        const prompt = `Rewrite the following text to be longer, more detailed, and clearer. Retain original meaning and keep markdown structure. Output only the rewritten text as markdown.\n\nTEXT:\n"""\n${text}\n"""`;
+                        runAITransformReplace(prompt);
+                        setShowAiMenu(false);
+                      }}>Make longer</button>
+                    <button
+                      className="w-full text-left px-2 py-1 rounded hover:bg-gray-100"
+                      onMouseEnter={() => setShowToneMenu(false)}
+                      onClick={() => {
+                        if (!editor) return; const sel = editor.state.selection as Selection; const from = (sel as any).from; const to = (sel as any).to; if (from === to) return; const text = editor.state.doc.textBetween(from, to, '\n', '\ufffc');
+                        const prompt = `Rewrite the following text to be shorter and more concise while preserving meaning. Keep essential information and markdown structure. Output only the rewritten text as markdown.\n\nTEXT:\n"""\n${text}\n"""`;
+                        runAITransformReplace(prompt);
+                        setShowAiMenu(false);
+                      }}>Make shorter</button>
+                    <button
+                      className="w-full text-left px-2 py-1 rounded hover:bg-gray-100"
+                      onMouseEnter={() => setShowToneMenu(false)}
+                      onClick={() => { runExplainForSelection(); setShowAiMenu(false); }}
+                    >Explain</button>
+                    <div className="relative">
+                      <button className="w-full text-left px-2 py-1 rounded hover:bg-gray-100" onMouseEnter={() => setShowToneMenu(true)} onClick={() => setShowToneMenu((v) => !v)}>Change tone ▸</button>
+                      {showToneMenu && (
+                        <div className="absolute top-0 left-full ml-1 w-44 bg-white border border-gray-200 rounded-md shadow-lg p-1 z-50">
+                          {['professional', 'casual', 'friendly'].map((tone) => (
+                            <button key={tone} className="w-full text-left px-2 py-1 rounded hover:bg-gray-100" onClick={() => {
+                              if (!editor) return; const sel = editor.state.selection as Selection; const from = (sel as any).from; const to = (sel as any).to; if (from === to) return; const text = editor.state.doc.textBetween(from, to, '\n', '\ufffc');
+                              const prompt = `Rewrite the following text in a ${tone} tone. Preserve meaning and keep markdown formatting. Output only the rewritten text as markdown.\n\nTEXT:\n"""\n${text}\n"""`;
+                              runAITransformReplace(prompt);
+                              setShowAiMenu(false); setShowToneMenu(false);
+                            }}>{tone[0].toUpperCase() + tone.slice(1)}</button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <div className="h-px bg-gray-200 my-1" />
+                    <button
+                      className="w-full text-left px-2 py-1 rounded hover:bg-gray-100"
+                      onMouseEnter={() => setShowToneMenu(false)}
+                      onClick={() => {
+                        if (!editor) return; const sel = editor.state.selection as Selection; const from = (sel as any).from; const to = (sel as any).to; if (from === to) return; const text = editor.state.doc.textBetween(from, to, '\n', '\ufffc');
+                        aiEditSelectionRef.current = { from, to, text };
+                        // Open the existing AI prompt bar near the bubble position
+                        const rootRect = containerRef.current?.getBoundingClientRect();
+                        try {
+                          let coords: any = null; try { coords = editor.view.coordsAtPos(to); } catch { }
+                          if (rootRect) setAiPos({ left: coords.left - rootRect.left, top: coords.bottom - rootRect.top + 12 });
+                        } catch { }
+                        setAiOpen(true);
+                        setAiPrompt('');
+                        setShowAiMenu(false);
+                        setTimeout(() => aiInputRef.current?.focus(), 0);
+                      }}>Edit…</button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Floating menu disabled: only show bubble menu when text is selected */}
+
+        <div
+          onPasteCapture={(e) => {
+            if (!editor) return;
+            if (!editor.isEditable) return; // block paste in view-only
+            const data = (e as React.ClipboardEvent<HTMLDivElement>).clipboardData;
+            if (!data) return;
+            const types = Array.from(data.types || []);
+            const md = data.getData('text/markdown');
+            const plain = data.getData('text/plain');
+            const source = md || plain || '';
+            // If the clipboard contains a single URL, try to extract and insert an image first
+            const maybeUrl = (source || '').trim();
+            if (/^https?:\/\/\S+$/i.test(maybeUrl)) {
+              const direct = extractDirectImageUrl(maybeUrl);
+              if (direct) {
+                e.preventDefault();
+                editor.chain().focus().setImage({ src: direct }).run();
+                return;
+              }
+              // YouTube: embed video instead of plain link
+              try {
+                const u = new URL(maybeUrl);
+                const host = u.hostname.replace(/^www\./, '');
+                let ytId: string | null = null; let start: number | null = null;
+                if (host === 'youtube.com' || host === 'm.youtube.com' || host === 'music.youtube.com') {
+                  ytId = u.searchParams.get('v');
+                  if (!ytId) {
+                    const m = u.pathname.match(/\/shorts\/([A-Za-z0-9_-]{6,})/);
+                    if (m) ytId = m[1];
+                  }
+                } else if (host === 'youtu.be') {
+                  const m = u.pathname.match(/^\/([A-Za-z0-9_-]{6,})/);
+                  if (m) ytId = m[1];
+                }
+                const t = u.searchParams.get('t') || u.searchParams.get('start');
+                if (t) {
+                  if (/^\d+$/.test(t)) start = parseInt(t, 10);
+                  else {
+                    const m = t.match(/(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?/);
+                    if (m) {
+                      const h = m[1] ? parseInt(m[1], 10) : 0;
+                      const min = m[2] ? parseInt(m[2], 10) : 0;
+                      const s = m[3] ? parseInt(m[3], 10) : 0;
+                      start = h * 3600 + min * 60 + s;
+                    }
+                  }
+                }
+                if (ytId) {
+                  e.preventDefault();
+                  const type = (editor as any)?.schema?.nodes?.['youtube'];
+                  if (type) editor.chain().focus().insertContent({ type: 'youtube', attrs: { videoId: ytId, start } }).run();
+                  else editor.chain().focus().insertContent(maybeUrl).run();
+                  return;
+                }
+              } catch { }
+              // Try probing likely candidates without file extensions (e.g., googleusercontent)
+              const candidates = getCandidateImageUrls(maybeUrl);
+              if (candidates.length > 0) {
+                e.preventDefault();
+                // Limit to the first 3 candidates to avoid long delays
+                const limited = candidates.slice(0, 3);
+                (async () => {
+                  for (const c of limited) {
+                    const ok = await quickLoadImage(c);
+                    if (ok) {
+                      editor.chain().focus().setImage({ src: c }).run();
+                      return;
+                    }
+                  }
+                  // Fallback: insert as a clickable link
+                  editor
+                    .chain()
+                    .focus()
+                    .insertContent({ type: 'text', text: maybeUrl, marks: [{ type: 'link', attrs: { href: maybeUrl } }] })
+                    .run();
+                })();
+                return;
+              }
+            }
+            // If rich HTML is available and we didn't detect a direct image URL, let Tiptap handle it
+            if (types.includes('text/html')) {
+              return;
+            }
+            // Direct image URL paste -> insert as image
+            const url = (source || '').trim();
+            if (/^(https?:\/\/[^\s]+\.(png|jpe?g|gif|webp|svg))(\?[^\s]*)?$/i.test(url)) {
+              e.preventDefault();
+              editor.chain().focus().setImage({ src: url }).run();
+              return;
+            }
+            const seemsMarkdown = /(\n|^)(\s{0,3}#{1,6}\s)|(^|\n)[-*_]{3,}\s*$|(```[\s\S]*?```)|(^|\n)[0-9]+\.\s|(^|\n)[-+*]\s|(^|\n)>\s/.test(source);
+            if (seemsMarkdown) {
+              e.preventDefault();
+              const preprocessed = preprocessMarkdownForPaste(source);
+              const rendered = marked.parse(preprocessed, { breaks: true, gfm: true }) as string;
+              editor.chain().focus().insertContent(rendered).run();
+              return;
+            }
+            // If not markdown but looks like code (e.g., C++), insert as a codeBlock with detected language
+            const trimmed = (plain || '').trim();
+            if (trimmed && isLikelyCodeBlock(trimmed)) {
+              e.preventDefault();
+              const langGuess = detectLanguageFromText(trimmed) || 'cpp';
+              const text = trimmed.replace(/\r\n?/g, '\n');
+              editor
+                .chain()
+                .focus()
+                .insertContent({
+                  type: 'codeBlock',
+                  attrs: { language: langGuess },
+                  content: [{ type: 'text', text }],
+                })
+                .run();
+            }
+          }}
+        >
+          <EditorContent editor={editor}
+            onClickCapture={(e) => {
+              // Intercept internal page links with href like "#page:<id>"
+              const t = e.target as HTMLElement;
+              const a = t.closest('a') as HTMLAnchorElement | null;
+              if (!a) return;
+              const href = a.getAttribute('href') || '';
+              if (href.startsWith('#page:')) {
+                const pageId = href.slice('#page:'.length);
+                const evt = e as unknown as MouseEvent;
+                const isNewTab = (evt.ctrlKey || (evt as any).metaKey || evt.button === 1 || a.target === '_blank');
+                if (isNewTab) {
+                  try { setFileMenuOpen(false); setFileMenuDropdownOpen(false); setFileMenuTarget(null); } catch { }
+                  try { window.sessionStorage.setItem('onenot:pendingPageId', pageId); } catch { }
+                  try { window.open('/notebooks', '_blank'); } catch { }
+                  e.preventDefault();
+                  e.stopPropagation();
+                  return;
+                }
+                e.preventDefault();
+                try { setFileMenuOpen(false); setFileMenuDropdownOpen(false); setFileMenuTarget(null); } catch { }
+                try {
+                  if (gotoPageFromCtx) {
+                    gotoPageFromCtx(pageId);
+                  } else if (selectPageFromCtx) {
+                    selectPageFromCtx(pageId || null);
+                  }
+                  try { window.history.replaceState(null, '', '/notebooks'); } catch { }
+                } catch { }
+              }
+            }}
+            onAuxClickCapture={(e) => {
+              // Middle-click new-tab handler for internal page links
+              const t = e.target as unknown as HTMLElement;
+              const a = t && (t.closest ? (t.closest('a') as HTMLAnchorElement | null) : null);
+              if (!a) return;
+              const href = a.getAttribute('href') || '';
+              if (!href.startsWith('#page:')) return;
+              const pageId = href.slice('#page:'.length);
+              try { setFileMenuOpen(false); setFileMenuDropdownOpen(false); setFileMenuTarget(null); } catch { }
+              try { window.sessionStorage.setItem('onenot:pendingPageId', pageId); } catch { }
+              try { window.open('/notebooks', '_blank'); } catch { }
+              e.preventDefault();
+              e.stopPropagation();
+            }}
+          />
+          {/* Hidden input moved below; keep a single instance to avoid duplicate events */}
+        </div>
+        {/* Upload bubble at caret */}
+        {editor.isEditable && uploadPos && uploadPhase !== 'idle' && (
+          <div
+            className="absolute z-40 bg-white border border-gray-200 shadow-sm rounded-md px-2 py-1 text-xs flex items-center gap-2 not-prose"
+            style={{ left: uploadPos.left, top: uploadPos.top }}
+          >
+            {uploadPhase === 'preparing' && (
+              <>
+                <span className="inline-block w-3 h-3 mr-1 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                <span className="text-gray-700">Preparing…</span>
+              </>
+            )}
+            {uploadPhase === 'uploading' && (
+              <>
+                <span className="inline-block w-3 h-3 mr-1 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                <span className="text-gray-700">Uploading {uploadProgress}%</span>
+              </>
+            )}
+            {uploadPhase === 'done' && (
+              <span className="text-green-700">Uploaded</span>
+            )}
+            {uploadPhase === 'error' && (
+              <span className="text-red-700">{uploadError || 'Upload failed'}</span>
+            )}
+          </div>
+        )}
+        {/* Link Page popover */}
+        {editor.isEditable && linkOpen && (linkPos || slashPos) && (
+          <div
+            ref={linkRef}
+            className="absolute z-50 bg-white border border-gray-200 shadow-lg rounded-md overflow-hidden not-prose"
+            style={{ left: (linkPos || slashPos)!.left, top: (linkPos || slashPos)!.top }}
+            onMouseDown={(e) => { e.preventDefault(); }}
+          >
+            <div className="p-2 w-72">
+              <input
+                type="text"
+                className="border rounded px-2 py-1 text-sm w-full disabled:opacity-60"
+                placeholder={debouncedQuery !== normalizedQuery ? "Filtering..." : "Search or create page"}
+                value={linkQuery}
+                onChange={(e) => {
+                  if (!linkBusy) {
+                    setLinkQuery(e.target.value);
+                    setLinkIndex(0);
+                  }
+                }}
+                onKeyDown={(e) => {
+                  const list = filteredLinkPages;
+                  if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    const maxIndex = canCreateLink ? list.length : Math.max(list.length - 1, 0);
+                    setLinkIndex((i) => Math.min(i + 1, Math.max(maxIndex, 0)));
+                  } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    setLinkIndex((i) => Math.max(i - 1, 0));
+                  } else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (!linkBusy) handlePickLinkItem();
+                  } else if (e.key === 'Escape') {
+                    if (!linkBusy) setLinkOpen(false);
+                  }
+                }}
+                autoFocus
+                disabled={linkBusy}
+              />
+              <div className="mt-2 max-h-60 overflow-auto">
+                {debouncedQuery !== normalizedQuery ? (
+                  <div className="text-sm text-gray-500 px-1 py-1">Filtering...</div>
+                ) : ancestorNameConflict ? (
+                  <div className="text-sm text-red-600 px-1 py-1">"{(linkQuery || '').trim()}" is an ancestor of this page and cannot be linked.</div>
+                ) : filteredLinkPages.length === 0 && !canCreateLink ? (
+                  <div className="text-sm text-gray-500 px-1 py-1">No matches</div>
+                ) : (
+                  <ul className="list-none m-0 p-0">
+                    {filteredLinkPages.map((p, i) => (
+                      <li key={p.id}>
+                        <button
+                          className={`w-full text-left px-2 py-1 text-sm rounded ${i === linkIndex ? 'bg-gray-100' : ''} ${linkBusy ? 'opacity-60 pointer-events-none' : ''}`}
+                          onMouseEnter={() => setLinkIndex(i)}
+                          onClick={() => { if (!linkBusy) { setLinkIndex(i); handlePickLinkItem(); } }}
+                        >
+                          <span className="inline-flex items-center">
+                            {p.name || 'Untitled'}
+                            {linkBusy && (linkBusyItemId === p.id || (linkCreatingName && ((p.name || 'Untitled').trim().toLowerCase() === linkCreatingName.trim().toLowerCase()))) ? (
+                              <span className="inline-block w-3 h-3 ml-2 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                            ) : null}
+                          </span>
+                        </button>
+                      </li>
+                    ))}
+                    {canCreateLink && (
+                      <li>
+                        <button
+                          className={`w-full text-left px-2 py-1 text-sm rounded flex items-center ${linkIndex === filteredLinkPages.length ? 'bg-gray-100' : ''} ${linkBusy ? 'pointer-events-none' : ''}`}
+                          onMouseEnter={() => setLinkIndex(filteredLinkPages.length)}
+                          onClick={() => { if (!linkBusy) { setLinkIndex(filteredLinkPages.length); handlePickLinkItem(); } }}
+                        >
+                          {linkBusy ? (
+                            <>
+                              Creating "{linkCreatingName || (linkQuery || '').trim()}"…
+                              <span className="inline-block w-3 h-3 ml-2 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                            </>
+                          ) : (
+                            <>Create new page “{(linkQuery || '').trim()}”</>
+                          )}
+                          {/* Spinner already shown next to the text above while busy */}
+                        </button>
+                      </li>
+                    )}
+                  </ul>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+        {/* Slash command menu */}
+        {editor.isEditable && slashOpen && slashPos && Number.isFinite(slashPos.left as any) && Number.isFinite(slashPos.top as any) && (
+          <div
+            className="absolute z-50 bg-white border border-gray-200 shadow-lg rounded-md overflow-hidden min-w-56 not-prose"
+            style={{ left: slashPos.left, top: slashPos.top }}
+            onMouseDown={(e) => e.preventDefault()}
+            ref={slashRef}
+          >
+            {safeSlashItems.length === 0 ? (
+              <div className="px-3 py-2 text-sm text-gray-500">No matches</div>
+            ) : (
+              <ul className="max-h-64 overflow-auto list-none m-0 p-0" style={{ listStyle: 'none' }} role="listbox" aria-label="Insert block">
+                {safeSlashItems.map((it: { key: string; label: string; hint: string; run: () => void }, i: number) => (
+                  <li key={it.key} role="option" aria-selected={i === slashIndex} className="m-0 p-0">
+                    <button
+                      className={`w-full text-left px-0 pr-3 py-2 text-sm flex items-center justify-between ${i === slashIndex ? 'bg-gray-100' : 'bg-white'} hover:bg-gray-50`}
+                      onMouseEnter={() => setSlashIndex(i)}
+                      onClick={() => {
+                        if (!editor) return;
+                        if (slashRange && Number.isFinite(slashRange.from) && Number.isFinite(slashRange.to) && slashRange.from < slashRange.to) {
+                          try { editor.chain().focus().deleteRange(slashRange).run(); } catch { }
+                        }
+                        if (it.key === 'upload') {
+                          // Trigger caret upload
+                          pickAndUploadAtCaret();
+                        } else {
+                          it.run();
+                        }
+                        setSlashOpen(false);
+                      }}
+                    >
+                      <span className="font-medium text-gray-800">{it.label}</span>
+                      <span className="ml-4 text-xs text-gray-500">{it.hint}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
+        {/* AI prompt popover (separate from suggestions) */}
+        {editor.isEditable && aiOpen && (aiPos || slashPos) && (
+          <div
+            ref={aiRef}
+            className="absolute z-50 bg-white border border-gray-200 shadow-lg rounded-md overflow-hidden not-prose"
+            style={
+              aiRunning
+                ? { position: 'fixed', left: '50%', transform: 'translateX(-50%)', bottom: 24 }
+                : { left: (aiPos || slashPos)!.left, top: (aiPos || slashPos)!.top }
+            }
+            onMouseDown={(e) => {
+              const t = e.target as HTMLElement;
+              // Allow focusing the text input; prevent default elsewhere to avoid editor focus churn
+              if (t.closest('input, textarea, select')) return;
+              e.preventDefault();
+            }}
+            onMouseLeave={() => { if (!aiRunning && !aiConfirmOpen && !aiError) setAiOpen(false); }}
+          >
+            <div className="p-2 flex items-center gap-2">
+              <input
+                ref={aiInputRef}
+                type="text"
+                className="border rounded px-2 py-1 text-sm w-64"
+                placeholder="Describe what to write…"
+                value={aiPrompt}
+                onChange={(e) => { setAiPrompt(e.target.value); if (aiError) setAiError(''); }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') runAIInline();
+                  if (e.key === 'Escape') { if (!aiRunning) { setAiOpen(false); setAiPrompt(''); } }
+                }}
+                spellCheck={false}
+                disabled={aiRunning}
+                onFocus={() => { if (aiError) setAiError(''); }}
+              />
+              {!aiRunning ? (
+                <div className="flex flex-col items-start gap-1">
                   <button
                     type="button"
-                    onClick={() => stopAIInline()}
-                    className="px-2.5 py-1.5 text-xs rounded bg-red-600 text-white hover:bg-red-700"
+                    onClick={() => runAIInline()}
+                    className="px-2.5 py-1.5 text-xs rounded bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50"
+                    disabled={!aiPrompt.trim()}
                   >
+                    Generate
+                  </button>
+                  {aiError ? (
+                    <div className="text-[11px] text-red-600 leading-snug">
+                      {aiError}
+                    </div>
+                  ) : null}
+                </div>
+              ) : (
+                <div className="flex flex-col items-start gap-1">
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center text-xs text-gray-600">
+                      <span className="inline-block w-3 h-3 mr-1 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                      {aiHasFirstChunk ? 'Generating…' : 'Thinking…'}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => stopAIInline()}
+                      className="px-2.5 py-1.5 text-xs rounded bg-red-600 text-white hover:bg-red-700"
+                    >
+                      Stop
+                    </button>
+                  </div>
+                  {aiError ? (
+                    <div className="text-[11px] text-red-600 leading-snug">
+                      {aiError}
+                    </div>
+                  ) : null}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Reserve a bottom spacer during generation to keep ~25% viewport blank for aesthetics */}
+        {aiRunning && (
+          <div aria-hidden className="pointer-events-none" style={{ height: '25vh' }} />
+        )}
+
+        {/* Inline Keep/Discard confirmation below generated content */}
+        {editor.isEditable && aiConfirmOpen && !aiRunning && aiConfirmPos && (
+          <div
+            className="absolute z-40 bg-white border border-gray-200 shadow-sm rounded-md px-2 py-1 text-xs flex items-center gap-2"
+            style={{ left: aiConfirmPos.left, top: aiConfirmPos.top }}
+          >
+            <span className="text-gray-600">Keep generated content?</span>
+            <button
+              type="button"
+              onClick={() => {
+                try {
+                  if (editor && aiStartPosRef.current !== null && aiEndPosRef.current !== null) {
+                    const s = aiStartPosRef.current as number;
+                    const e = aiEndPosRef.current as number;
+                    const chain = editor.chain().focus().setTextSelection({ from: s, to: e });
+                    if (aiSessionModeRef.current === 'replace' && originalSelectionHTMLRef.current !== null) {
+                      chain.insertContent(originalSelectionHTMLRef.current);
+                    } else {
+                      chain.deleteSelection();
+                    }
+                    chain.run();
+                  }
+                } catch { }
+                setAiConfirmOpen(false);
+                setAiConfirmPos(null);
+                setAiOpen(false);
+                // Reset session state
+                aiSessionModeRef.current = 'insert';
+                originalSelectionHTMLRef.current = null;
+              }}
+              className="px-2 py-1 rounded border border-gray-300 text-gray-700 hover:bg-gray-50"
+            >
+              Discard
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setAiConfirmOpen(false);
+                setAiConfirmPos(null);
+                setAiOpen(false);
+                // On keep, clear snapshot since we won't restore
+                aiSessionModeRef.current = 'insert';
+                originalSelectionHTMLRef.current = null;
+              }}
+              className="px-2 py-1 rounded bg-indigo-600 text-white hover:bg-indigo-700"
+            >
+              Keep
+            </button>
+          </div>
+        )}
+
+        {/* Inline loader for transform actions */}
+        {editor.isEditable && inlineLoaderOpen && inlineLoaderPos && (
+          <div
+            className="absolute z-40 bg-white/95 backdrop-blur-sm border border-gray-200 shadow-sm rounded-md px-2 py-1 text-xs flex items-center gap-2"
+            style={{ left: inlineLoaderPos.left, top: inlineLoaderPos.top }}
+          >
+            <span className="inline-block w-3 h-3 mr-1 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+            <span className="text-gray-700">{aiHasFirstChunk ? 'Generating…' : 'Thinking…'}</span>
+            <button
+              type="button"
+              onClick={() => { try { stopAIInline(); } catch { } }}
+              className="px-2 py-0.5 rounded bg-red-600 text-white hover:bg-red-700"
+            >
+              Stop
+            </button>
+          </div>
+        )}
+
+        {/* Hidden input for caret upload */}
+        <input
+          ref={uploadInputRef}
+          type="file"
+          className="hidden"
+          onChange={onHiddenFilePicked}
+        />
+
+        {/* Upload bubble near caret */}
+        {editor.isEditable && uploadPos && uploadPhase !== 'idle' && (
+          <div
+            className="absolute z-40 bg-white border border-gray-200 shadow-sm rounded-md px-2 py-1 text-xs flex items-center gap-2 not-prose"
+            style={{ left: uploadPos.left, top: uploadPos.top }}
+          >
+            {uploadPhase === 'preparing' ? (
+              <>
+                <span className="inline-block w-3 h-3 mr-1 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                <span className="text-gray-700">Preparing…</span>
+              </>
+            ) : uploadPhase === 'uploading' ? (
+              <>
+                <span className="inline-block w-3 h-3 mr-1 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                <span className="text-gray-700">Uploading {uploadProgress}%</span>
+              </>
+            ) : uploadPhase === 'done' ? (
+              <span className="text-green-700">Uploaded</span>
+            ) : (
+              <span className="text-red-600">{uploadError || 'Upload failed'}</span>
+            )}
+          </div>
+        )}
+
+        {/* Explain side popover */}
+        {editor.isEditable && explainOpen && explainPos && (
+          <div
+            className="absolute z-40 bg-white border border-gray-200 shadow-lg rounded-md p-3 text-sm max-w-md"
+            style={{ left: explainPos.left, top: explainPos.top }}
+          >
+            <div className="flex items-center justify-between mb-2">
+              <div className="font-medium text-gray-800">Explanation</div>
+              <div className="flex items-center gap-2">
+                {explainRunning ? (
+                  <button type="button" className="px-2 py-1 text-xs rounded bg-red-600 text-white" onClick={() => { try { explainAbortRef.current?.abort(); } catch { }; setExplainRunning(false); }}>
                     Stop
                   </button>
-                </div>
-                {aiError ? (
-                  <div className="text-[11px] text-red-600 leading-snug">
-                    {aiError}
-                  </div>
                 ) : null}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Reserve a bottom spacer during generation to keep ~25% viewport blank for aesthetics */}
-      {aiRunning && (
-        <div aria-hidden className="pointer-events-none" style={{ height: '25vh' }} />
-      )}
-
-      {/* Inline Keep/Discard confirmation below generated content */}
-      {editor.isEditable && aiConfirmOpen && !aiRunning && aiConfirmPos && (
-        <div
-          className="absolute z-40 bg-white border border-gray-200 shadow-sm rounded-md px-2 py-1 text-xs flex items-center gap-2"
-          style={{ left: aiConfirmPos.left, top: aiConfirmPos.top }}
-        >
-          <span className="text-gray-600">Keep generated content?</span>
-          <button
-            type="button"
-            onClick={() => {
-              try {
-                if (editor && aiStartPosRef.current !== null && aiEndPosRef.current !== null) {
-                  const s = aiStartPosRef.current as number;
-                  const e = aiEndPosRef.current as number;
-                  const chain = editor.chain().focus().setTextSelection({ from: s, to: e });
-                  if (aiSessionModeRef.current === 'replace' && originalSelectionHTMLRef.current !== null) {
-                    chain.insertContent(originalSelectionHTMLRef.current);
-                  } else {
-                    chain.deleteSelection();
-                  }
-                  chain.run();
-                }
-              } catch {}
-              setAiConfirmOpen(false);
-              setAiConfirmPos(null);
-              setAiOpen(false);
-              // Reset session state
-              aiSessionModeRef.current = 'insert';
-              originalSelectionHTMLRef.current = null;
-            }}
-            className="px-2 py-1 rounded border border-gray-300 text-gray-700 hover:bg-gray-50"
-          >
-            Discard
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setAiConfirmOpen(false);
-              setAiConfirmPos(null);
-              setAiOpen(false);
-              // On keep, clear snapshot since we won't restore
-              aiSessionModeRef.current = 'insert';
-              originalSelectionHTMLRef.current = null;
-            }}
-            className="px-2 py-1 rounded bg-indigo-600 text-white hover:bg-indigo-700"
-          >
-            Keep
-          </button>
-        </div>
-      )}
-
-      {/* Inline loader for transform actions */}
-      {editor.isEditable && inlineLoaderOpen && inlineLoaderPos && (
-        <div
-          className="absolute z-40 bg-white/95 backdrop-blur-sm border border-gray-200 shadow-sm rounded-md px-2 py-1 text-xs flex items-center gap-2"
-          style={{ left: inlineLoaderPos.left, top: inlineLoaderPos.top }}
-        >
-          <span className="inline-block w-3 h-3 mr-1 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-          <span className="text-gray-700">{aiHasFirstChunk ? 'Generating…' : 'Thinking…'}</span>
-          <button
-            type="button"
-            onClick={() => { try { stopAIInline(); } catch {} }}
-            className="px-2 py-0.5 rounded bg-red-600 text-white hover:bg-red-700"
-          >
-            Stop
-          </button>
-        </div>
-      )}
-
-      {/* Hidden input for caret upload */}
-      <input
-        ref={uploadInputRef}
-        type="file"
-        className="hidden"
-        onChange={onHiddenFilePicked}
-      />
-
-      {/* Upload bubble near caret */}
-      {editor.isEditable && uploadPos && uploadPhase !== 'idle' && (
-        <div
-          className="absolute z-40 bg-white border border-gray-200 shadow-sm rounded-md px-2 py-1 text-xs flex items-center gap-2 not-prose"
-          style={{ left: uploadPos.left, top: uploadPos.top }}
-        >
-          {uploadPhase === 'preparing' ? (
-            <>
-              <span className="inline-block w-3 h-3 mr-1 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-              <span className="text-gray-700">Preparing…</span>
-            </>
-          ) : uploadPhase === 'uploading' ? (
-            <>
-              <span className="inline-block w-3 h-3 mr-1 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-              <span className="text-gray-700">Uploading {uploadProgress}%</span>
-            </>
-          ) : uploadPhase === 'done' ? (
-            <span className="text-green-700">Uploaded</span>
-          ) : (
-            <span className="text-red-600">{uploadError || 'Upload failed'}</span>
-          )}
-        </div>
-      )}
-
-      {/* Explain side popover */}
-      {editor.isEditable && explainOpen && explainPos && (
-        <div
-          className="absolute z-40 bg-white border border-gray-200 shadow-lg rounded-md p-3 text-sm max-w-md"
-          style={{ left: explainPos.left, top: explainPos.top }}
-        >
-          <div className="flex items-center justify-between mb-2">
-            <div className="font-medium text-gray-800">Explanation</div>
-            <div className="flex items-center gap-2">
-              {explainRunning ? (
-                <button type="button" className="px-2 py-1 text-xs rounded bg-red-600 text-white" onClick={() => { try { explainAbortRef.current?.abort(); } catch {}; setExplainRunning(false); }}>
-                  Stop
-                </button>
-              ) : null}
-              <div className="flex items-center gap-2">
-                <button type="button" className="px-2 py-1 text-xs rounded border hover:bg-gray-50" onClick={() => { try { navigator.clipboard.writeText(explainText); } catch {} }}>
-                  <div className="flex items-center gap-1">
-                    <FiCopy className="w-3 h-3" />
-                    <span>Copy</span>
-                  </div>
-                </button>
-                <button type="button" className="px-2 py-1 text-xs rounded border hover:bg-gray-50" onClick={() => { setExplainOpen(false); setExplainText(''); }}>
-                  Close
-                </button>
+                <div className="flex items-center gap-2">
+                  <button type="button" className="px-2 py-1 text-xs rounded border hover:bg-gray-50" onClick={() => { try { navigator.clipboard.writeText(explainText); } catch { } }}>
+                    <div className="flex items-center gap-1">
+                      <FiCopy className="w-3 h-3" />
+                      <span>Copy</span>
+                    </div>
+                  </button>
+                  <button type="button" className="px-2 py-1 text-xs rounded border hover:bg-gray-50" onClick={() => { setExplainOpen(false); setExplainText(''); }}>
+                    Close
+                  </button>
+                </div>
               </div>
             </div>
+            {explainText ? (
+              <div className="prose prose-sm text-gray-800 max-h-80 overflow-auto"
+                dangerouslySetInnerHTML={{ __html: explainHtml }} />
+            ) : (
+              <div className="text-gray-700">
+                {explainRunning ? (aiHasFirstChunk ? 'Loading…' : 'Thinking…') : 'No content'}
+              </div>
+            )}
           </div>
-          {explainText ? (
-            <div className="prose prose-sm text-gray-800 max-h-80 overflow-auto"
-                 dangerouslySetInnerHTML={{ __html: explainHtml }} />
-          ) : (
-            <div className="text-gray-700">
-              {explainRunning ? (aiHasFirstChunk ? 'Loading…' : 'Thinking…') : 'No content'}
-            </div>
-          )}
-        </div>
-      )}
+        )}
 
-      {/* Inline attachment 3-dots menu */}
-      {editor.isEditable && fileMenuOpen && fileMenuPos && fileMenuTarget && (
-        <div
-          id="file-attachment-menu"
-          className="absolute z-40"
-          style={{ left: fileMenuPos.left, top: fileMenuPos.top }}
-        >
-          <div className="relative">
-            <button
-              type="button"
-              aria-label="More"
-              className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-100 text-gray-600"
-              onClick={() => setFileMenuDropdownOpen(!fileMenuDropdownOpen)}
-            >
-              <div className="flex flex-col items-center justify-center gap-0.5">
-                <span className="block w-1 h-1 bg-current rounded-full" />
-                <span className="block w-1 h-1 bg-current rounded-full" />
-                <span className="block w-1 h-1 bg-current rounded-full" />
-              </div>
-            </button>
-            {fileMenuDropdownOpen && (
-              <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-md shadow-lg overflow-hidden">
-                <button className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50" onClick={renameCurrentAttachment}>Rename</button>
-                <button className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50" onClick={deleteCurrentAttachment}>Delete</button>
-              </div>
-            )}
+        {/* Inline attachment 3-dots menu */}
+        {editor.isEditable && fileMenuOpen && fileMenuPos && fileMenuTarget && (
+          <div
+            id="file-attachment-menu"
+            className="absolute z-40"
+            style={{ left: fileMenuPos.left, top: fileMenuPos.top }}
+          >
+            <div className="relative">
+              <button
+                type="button"
+                aria-label="More"
+                className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-100 text-gray-600"
+                onClick={() => setFileMenuDropdownOpen(!fileMenuDropdownOpen)}
+              >
+                <div className="flex flex-col items-center justify-center gap-0.5">
+                  <span className="block w-1 h-1 bg-current rounded-full" />
+                  <span className="block w-1 h-1 bg-current rounded-full" />
+                  <span className="block w-1 h-1 bg-current rounded-full" />
+                </div>
+              </button>
+              {fileMenuDropdownOpen && (
+                <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-md shadow-lg overflow-hidden">
+                  <button
+                    className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    onClick={renameCurrentAttachment}
+                    disabled={fileDeleteLoading}
+                  >
+                    Rename
+                  </button>
+                  <button
+                    className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    onClick={deleteCurrentAttachment}
+                    disabled={fileDeleteLoading}
+                  >
+                    {fileDeleteLoading ? (
+                      <>
+                        <span className="inline-block w-3 h-3 border-2 border-red-300 border-t-transparent rounded-full animate-spin" />
+                        Deleting...
+                      </>
+                    ) : (
+                      'Delete'
+                    )}
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      )}
-      {/* Inline page link 3-dots menu */}
-      {editor.isEditable && pageLinkMenuOpen && pageLinkMenuPos && pageLinkMenuTarget && (
-        <div
-          id="page-link-menu"
-          className="absolute z-40"
-          style={{ left: pageLinkMenuPos.left, top: pageLinkMenuPos.top }}
-        >
-          <div className="relative">
-            <button
-              type="button"
-              aria-label="More"
-              className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-100 text-gray-600"
-              onClick={() => setPageLinkMenuDropdownOpen(!pageLinkMenuDropdownOpen)}
-            >
-              <div className="flex flex-col items-center justify-center gap-0.5">
-                <span className="block w-1 h-1 bg-current rounded-full" />
-                <span className="block w-1 h-1 bg-current rounded-full" />
-                <span className="block w-1 h-1 bg-current rounded-full" />
-              </div>
-            </button>
-            {pageLinkMenuDropdownOpen && (
-              <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-md shadow-lg overflow-hidden">
-                <button className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50" onClick={renameCurrentPageLink}>Rename</button>
-                <button className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50" onClick={deleteCurrentPageLink}>Delete</button>
-              </div>
-            )}
+        )}
+        {/* Inline page link 3-dots menu */}
+        {editor.isEditable && pageLinkMenuOpen && pageLinkMenuPos && pageLinkMenuTarget && (
+          <div
+            id="page-link-menu"
+            className="absolute z-40"
+            style={{ left: pageLinkMenuPos.left, top: pageLinkMenuPos.top }}
+          >
+            <div className="relative">
+              <button
+                type="button"
+                aria-label="More"
+                className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-100 text-gray-600"
+                onClick={() => setPageLinkMenuDropdownOpen(!pageLinkMenuDropdownOpen)}
+              >
+                <div className="flex flex-col items-center justify-center gap-0.5">
+                  <span className="block w-1 h-1 bg-current rounded-full" />
+                  <span className="block w-1 h-1 bg-current rounded-full" />
+                  <span className="block w-1 h-1 bg-current rounded-full" />
+                </div>
+              </button>
+              {pageLinkMenuDropdownOpen && (
+                <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-md shadow-lg overflow-hidden">
+                  <button className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50" onClick={renameCurrentPageLink}>Rename</button>
+                  <button className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50" onClick={deleteCurrentPageLink}>Delete</button>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      )}
-    </div>
-  </EditorErrorBoundary>
+        )}
+      </div>
+    </EditorErrorBoundary>
   );
 });
 
