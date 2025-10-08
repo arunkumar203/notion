@@ -339,6 +339,9 @@ export const NotebookProvider = ({ children }: { children: React.ReactNode }) =>
       return sorted;
     };
 
+    // Clear pages immediately when topic changes to prevent showing previous topic's pages
+    setPages([]);
+
     try {
       setPagesLoading(true);
       const pagesRef = ref(rtdb, `notebooks/${selectedNotebook}/sections/${selectedSection}/topics/${selectedTopic}/pages`);
@@ -378,7 +381,7 @@ export const NotebookProvider = ({ children }: { children: React.ReactNode }) =>
           const pageParentId = page.parentPageId || null;
           const pageName = page.name ?? 'Untitled Page';
           const pageLastUpdated = page.lastUpdated || page.updatedAt || 0;
-          
+
           // Skip if we already have this exact version
           const existing = currentPagesMap.get(id);
           if (existing &&
@@ -424,7 +427,7 @@ export const NotebookProvider = ({ children }: { children: React.ReactNode }) =>
           currentPagesMap = newPagesMap;
           setPages(sorted);
         }
-        
+
         setPagesLoading(false);
 
       }, (error) => {
@@ -636,7 +639,7 @@ export const NotebookProvider = ({ children }: { children: React.ReactNode }) =>
       setTimeout(() => {
         update(ref(rtdb), {
           [`${pagePath}/creating`]: null
-        }).catch(() => {}); // Non-blocking cleanup
+        }).catch(() => { }); // Non-blocking cleanup
       }, 500);
 
       return pageId;
@@ -646,7 +649,7 @@ export const NotebookProvider = ({ children }: { children: React.ReactNode }) =>
         const pagePath = `notebooks/${selectedNotebook}/sections/${selectedSection}/topics/${selectedTopic}/pages/${pageId}`;
         await remove(ref(rtdb, pagePath));
       } catch (cleanupError) {
-  
+
       }
 
       throw error;

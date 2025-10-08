@@ -2127,7 +2127,14 @@ export default function NotebooksPage() {
                       setTimeout(() => setHierarchyVisible(false), 250);
                     }
                   }}
-                  onCreate={createTopic}
+                  onCreate={async (name: string) => {
+                    await createTopic(name);
+                    // Close hierarchy panel after creating topic
+                    if (selectedNotebook && selectedSection) {
+                      setHierarchyOpen(false);
+                      setTimeout(() => setHierarchyVisible(false), 250);
+                    }
+                  }}
                   placeholder={selectedSection ? 'No topics' : 'Select a section'}
                   disabled={!selectedSection}
                   onRename={renameTopic}

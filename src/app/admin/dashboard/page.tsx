@@ -284,13 +284,16 @@ export default function AdminDashboard() {
                 </div>
               </Link>
 
-              <div className="flex items-center p-4 border border-gray-200 rounded-lg opacity-50 cursor-not-allowed">
-                <FiBarChart className="h-8 w-8 text-gray-400 mr-4" />
+              <Link
+                href="/admin/dashboard/analytics"
+                className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                <FiBarChart className="h-8 w-8 text-green-600 mr-4" />
                 <div>
-                  <h4 className="text-sm font-medium text-gray-500">Analytics</h4>
-                  <p className="text-sm text-gray-400">Coming soon</p>
+                  <h4 className="text-sm font-medium text-gray-900">Analytics</h4>
+                  <p className="text-sm text-gray-500">View system analytics and metrics</p>
                 </div>
-              </div>
+              </Link>
             </div>
           </div>
         </div>
