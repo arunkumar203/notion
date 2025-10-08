@@ -51,6 +51,13 @@ export default function ChatPage() {
   const [selectedModel, setSelectedModel] =
     useState<'gemini-2.5-flash' | 'gemini-2.5-pro'>('gemini-2.5-flash');
   const [thinkingEnabled, setThinkingEnabled] = useState(true);
+
+  // Auto-enable thinking when model is changed to pro
+  useEffect(() => {
+    if (selectedModel === 'gemini-2.5-pro') {
+      setThinkingEnabled(true);
+    }
+  }, [selectedModel]);
   const [thinkingDropdownOpen, setThinkingDropdownOpen] = useState<number | null>(null);
   const userToggledDropdownRef = useRef(false);
   const [copiedMessageId, setCopiedMessageId] = useState<number | null>(null);
@@ -132,11 +139,12 @@ export default function ChatPage() {
   }, [selectedChatId, chats, isGenerating]);
 
   // Auto-scroll to bottom only if user is at bottom or generating
+  // Auto-scroll to bottom only if user hasn't scrolled up
   useEffect(() => {
-    if (!isUserScrolling || isGenerating) {
+    if (!isUserScrolling) {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [messages, isUserScrolling, isGenerating]);
+  }, [messages, isUserScrolling]);
 
   // Detect if user has scrolled up
   useEffect(() => {
@@ -231,12 +239,12 @@ export default function ChatPage() {
 
     const updatedMessages = [...messages, userMessage];
 
-    // Assistant placeholder (thinking box visible immediately)
+    // Assistant placeholder (thinking box visible immediately if thinking is enabled)
     const assistantMessage: Message = {
       role: 'assistant',
       content: '',
       timestamp: Date.now(),
-      thinking: '',
+      ...(selectedModel === 'gemini-2.5-pro' || thinkingEnabled ? { thinking: '' } : {}),
     };
 
     const messagesWithAssistant = [...updatedMessages, assistantMessage];
@@ -246,6 +254,10 @@ export default function ChatPage() {
     setInput('');
     setIsGenerating(true);
     setIsThinking(true);
+
+    // Reset scroll state to enable auto-scroll for new message
+    setIsUserScrolling(false);
+    setShowScrollButton(false);
 
     userToggledDropdownRef.current = false;
     setThinkingDropdownOpen(newMessageIndex);
@@ -276,7 +288,7 @@ export default function ChatPage() {
         body: JSON.stringify({
           messages: conversationHistory,
           model: selectedModel,
-          includeThoughts: thinkingEnabled, // your API should wrap thoughts with markers
+          includeThoughts: selectedModel === 'gemini-2.5-pro' ? true : thinkingEnabled, // Pro always includes thoughts
         }),
         signal: controller.signal,
         credentials: 'include',
@@ -311,7 +323,7 @@ export default function ChatPage() {
         const updatedMsg: Message = {
           ...assistantMessage,
           content: assistantContent,
-          thinking: thinkingContent ?? '',
+          ...(thinkingContent && { thinking: thinkingContent }), // Only include thinking if it exists
           timestamp: Date.now(),
         };
         setMessages((prev) => {
@@ -432,7 +444,7 @@ export default function ChatPage() {
       const finalMsg: Message = {
         ...assistantMessage,
         content: assistantContent,
-        thinking: thinkingContent || undefined,
+        ...(thinkingContent && { thinking: thinkingContent }), // Only include thinking if it exists
         timestamp: Date.now(),
       };
       const finalMessages = [...updatedMessages, finalMsg];
@@ -463,9 +475,43 @@ export default function ChatPage() {
     }
   };
 
-  const stopGenerating = () => {
+  const stopGenerating = async () => {
     abortControllerRef.current?.abort();
+    const wasThinking = isThinking;
     setIsGenerating(false);
+    setIsThinking(false);
+
+    // Save the partial content that was generated before stopping
+    if (selectedChatId && messages.length > 0) {
+      try {
+        const lastMessage = messages[messages.length - 1];
+
+        // If stopped during thinking phase with no actual content, add a message
+        if (lastMessage.role === 'assistant' && (!lastMessage.content || !lastMessage.content.trim())) {
+          const updatedMessages = [...messages];
+          updatedMessages[updatedMessages.length - 1] = {
+            ...lastMessage,
+            content: wasThinking
+              ? '_Generation stopped during thinking phase_'
+              : '_Generation stopped before response_',
+          };
+          setMessages(updatedMessages);
+
+          await update(ref(rtdb, `users/${user?.uid}/chats/${selectedChatId}`), {
+            messages: updatedMessages,
+            updatedAt: Date.now(),
+          });
+        } else {
+          // Save whatever content was generated
+          await update(ref(rtdb, `users/${user?.uid}/chats/${selectedChatId}`), {
+            messages: messages,
+            updatedAt: Date.now(),
+          });
+        }
+      } catch (error) {
+        console.error('Error saving partial message:', error);
+      }
+    }
   };
 
   if (authLoading) {
@@ -593,13 +639,13 @@ export default function ChatPage() {
               <button
                 type="button"
                 role="switch"
-                aria-checked={thinkingEnabled}
+                aria-checked={selectedModel === 'gemini-2.5-pro' ? true : thinkingEnabled}
                 onClick={() => {
                   if (selectedModel === 'gemini-2.5-pro') return; // Pro always includes thoughts
                   setThinkingEnabled(!thinkingEnabled);
                 }}
-                disabled={isGenerating}
-                className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200 ${thinkingEnabled ? 'bg-indigo-600' : 'bg-gray-300'
+                disabled={isGenerating || selectedModel === 'gemini-2.5-pro'}
+                className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200 ${selectedModel === 'gemini-2.5-pro' || thinkingEnabled ? 'bg-indigo-600' : 'bg-gray-300'
                   } ${selectedModel === 'gemini-2.5-pro' ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
                   }`}
                 title={
@@ -609,7 +655,7 @@ export default function ChatPage() {
                 }
               >
                 <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition duration-200 ${thinkingEnabled ? 'translate-x-4' : 'translate-x-1'
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition duration-200 ${selectedModel === 'gemini-2.5-pro' || thinkingEnabled ? 'translate-x-4' : 'translate-x-1'
                     }`}
                 />
               </button>
@@ -639,8 +685,8 @@ export default function ChatPage() {
                       <div className="whitespace-pre-wrap break-words">{msg.content}</div>
                     ) : (
                       <>
-                        {/* Thinking (collapsible) */}
-                        {msg.thinking !== undefined && (
+                        {/* Thinking (collapsible) - only show if thinking is enabled or model is pro */}
+                        {msg.thinking !== undefined && (selectedModel === 'gemini-2.5-pro' || thinkingEnabled) && (
                           <details
                             open={thinkingDropdownOpen === idx}
                             className="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg overflow-hidden"
