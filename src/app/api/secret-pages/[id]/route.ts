@@ -21,8 +21,8 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
   const uid = await getUidFromSession();
   if (!uid) return jsonError(401, 'Not authenticated');
   try {
-  const { id } = await params;
-  const docRef = admin.firestore().collection('secret').doc(id);
+    const { id } = await params;
+    const docRef = admin.firestore().collection('secret').doc(id);
     const snap = await docRef.get();
     if (!snap.exists) return jsonError(404, 'Not found');
     const data = snap.data() || {};
@@ -37,11 +37,11 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
   const uid = await getUidFromSession();
   if (!uid) return jsonError(401, 'Not authenticated');
   try {
-  const { id } = await params;
+    const { id } = await params;
     const body = await req.json().catch(() => ({}));
     const { content, name } = body as { content?: string; name?: string };
     const now = Date.now();
-  const docRef = admin.firestore().collection('secret').doc(id);
+    const docRef = admin.firestore().collection('secret').doc(id);
     const snap = await docRef.get();
     if (!snap.exists) {
       // Create new
@@ -64,8 +64,8 @@ export async function DELETE(_: Request, { params }: { params: Promise<{ id: str
   const uid = await getUidFromSession();
   if (!uid) return jsonError(401, 'Not authenticated');
   try {
-  const { id } = await params;
-  const docRef = admin.firestore().collection('secret').doc(id);
+    const { id } = await params;
+    const docRef = admin.firestore().collection('secret').doc(id);
     const snap = await docRef.get();
     if (!snap.exists) return NextResponse.json({ ok: true });
     const data = snap.data() || {};

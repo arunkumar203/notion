@@ -10,7 +10,7 @@ export function parseTaskText(text: string): ParsedTask | null {
   if (!text.trim()) return null;
 
   const lowerText = text.toLowerCase().trim();
-  
+
   // Extract title (everything before time/date indicators)
   let content = text;
   const timeIndicators = /\b(at|on|every|tomorrow|today|next|this|due)\b/i;

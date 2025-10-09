@@ -30,41 +30,41 @@ export async function POST(request: Request) {
     }
 
     // console.log('[Session API] Session creation request received');
-    
+
     // Verify the request has a body
     if (!request.body) {
       return handleError('No request body', 400);
     }
-    
+
     let idToken: string;
-    
+
     try {
       const body = await request.json();
       idToken = body.idToken;
-      
+
       if (!idToken) {
         return handleError('No ID token provided', 400);
       }
     } catch (parseError) {
       return handleError('Invalid request body', 400, parseError);
     }
-    
-  // console.log('[Session API] ID token received, verifying...');
-    
+
+    // console.log('[Session API] ID token received, verifying...');
+
     try {
       // Verify the ID token first
-  const decodedToken = await auth.verifyIdToken(idToken, true); // Force token check
-  // console.log('[Session API] ID token verified for user:', decodedToken.uid);
-      
+      const decodedToken = await auth.verifyIdToken(idToken, true); // Force token check
+      // console.log('[Session API] ID token verified for user:', decodedToken.uid);
+
       // Check if email is verified (skip for Google providers as they're pre-verified)
       const isGoogleProvider = decodedToken.firebase?.sign_in_provider === 'google.com';
       if (!isGoogleProvider && !decodedToken.email_verified) {
         return handleError('Email not verified', 403);
       }
-      
-      // Set session expiration to 5 days
-      const expiresIn = 60 * 60 * 24 *365; // 365 days in seconds
-      
+
+      // Set session expiration to 7 days
+      const expiresIn = 60 * 60 * 24 * 7; // 7 days in seconds
+
       // Create the session cookie
       const sessionCookie = await auth.createSessionCookie(idToken, {
         expiresIn
@@ -73,11 +73,11 @@ export async function POST(request: Request) {
       // Calculate expiration date
       const expires = new Date();
       expires.setSeconds(expires.getSeconds() + expiresIn);
-      
-  // console.log('[Session API] Session cookie created, setting cookie...');
-      
-  const isProduction = process.env.NODE_ENV === 'production';
-      
+
+      // console.log('[Session API] Session cookie created, setting cookie...');
+
+      const isProduction = process.env.NODE_ENV === 'production';
+
       // Create response with the session cookie
       const response = new NextResponse(
         JSON.stringify({ status: 'success' }),
@@ -90,7 +90,7 @@ export async function POST(request: Request) {
       );
 
       // Set the session cookie with proper attributes
-  // console.log('[Session API] Setting session cookie...');
+      // console.log('[Session API] Setting session cookie...');
       // Do not set an explicit domain so the cookie is scoped to the current host
       response.cookies.set({
         name: 'session',
@@ -102,13 +102,13 @@ export async function POST(request: Request) {
         path: '/',
         expires: expires
       });
-      
+
       // Add cache control headers
       response.headers.set('Cache-Control', 'no-store');
 
-  // console.log('[Session API] Session created successfully');
+      // console.log('[Session API] Session created successfully');
       return response;
-      
+
     } catch (error: unknown) {
       console.error('[Session API] Error creating session:', error);
 

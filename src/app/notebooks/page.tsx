@@ -1497,7 +1497,7 @@ export default function NotebooksPage() {
   return (
     <div className="flex flex-col h-screen bg-gray-50 text-gray-900">
       {/* Header with hamburger on the left of the title */}
-      <header className="bg-white shadow-sm z-10" ref={topSentinelRef}>
+      <header className="bg-white shadow-sm z-50" ref={topSentinelRef}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex justify-between items-center">
           <div className="flex items-center gap-2">
             <button
@@ -1960,7 +1960,7 @@ export default function NotebooksPage() {
                 ) : null}
 
                 <div className="flex-1 flex flex-col mt-4 md:mt-6" ref={editorWrapRef}>
-                  <div className="flex-1 relative min-h-[300px] editor-container">
+                  <div className="flex-1 relative min-h-[calc(100vh-200px)] editor-container bg-white" style={{ boxShadow: '0 0 0 1px #e5e7eb' }}>
                     {contentReady ? (
                       <Editor
                         ref={editorRef}
@@ -2036,7 +2036,7 @@ export default function NotebooksPage() {
       {hierarchyVisible && overlayTop !== null && (
         <div
           className="fixed inset-x-0"
-          style={{ top: overlayTop, bottom: 0, zIndex: 50 }}
+          style={{ top: overlayTop, bottom: 0, zIndex: 40 }}
         >
           {/* Backdrop with fade */}
           <div

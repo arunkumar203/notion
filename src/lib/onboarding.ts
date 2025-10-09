@@ -129,6 +129,8 @@ export async function ensureSampleWorkspace(uid: string) {
         <li>YouTube embeds</li>
         <li>File uploads</li>
         <li>AI assistant integration</li>
+        <li>Tododist tasks</li>
+        <li>Chat interface</li>
         <li>Tables and Kanban Board</li>
         <li>Realtime sync</li>
       </ul>

@@ -185,8 +185,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           // Ensure user record exists
           await ensureUserRecord(user.uid, user.email);
 
-          // Don't automatically create sessions - only create them during explicit login
-          // This prevents sessions from being created when users are just on verification page
+          // If user is verified, ensure they have a valid session cookie
+          // This handles the case where user closes tab and comes back
+          if (user.emailVerified) {
+            try {
+              const idToken = await user.getIdToken(true);
+              await createSession(idToken);
+            } catch (sessionError) {
+              console.warn('Session refresh on auth state change failed:', sessionError);
+            }
+          }
         } catch (error) {
           console.error('Error in auth state change:', error);
         }
@@ -306,6 +314,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     },
   };
+
+  // Periodically refresh session to prevent expiration
+  useEffect(() => {
+    if (!user) return;
+
+    // Refresh session every 50 minutes (Firebase sessions last ~1 hour)
+    const refreshInterval = setInterval(async () => {
+      try {
+        const idToken = await user.getIdToken(true); // Force refresh
+        await createSession(idToken);
+        console.log('Session refreshed automatically');
+      } catch (error) {
+        console.error('Failed to refresh session:', error);
+      }
+    }, 50 * 60 * 1000); // 50 minutes
+
+    return () => clearInterval(refreshInterval);
+  }, [user]);
 
   return (
     <AuthContext.Provider value={value}>
