@@ -25,6 +25,8 @@ import PageLink from './extensions/PageLink';
 import YouTube from './extensions/YouTube';
 import KanbanExtensions from './extensions/Kanban';
 import TableExtension from './extensions/Table';
+import HtmlTableExtensions from './extensions/HtmlTable';
+
 import CharacterCount from '@tiptap/extension-character-count';
 import { FiBold, FiItalic, FiUnderline, FiLink, FiList, FiHash, FiCheckSquare, FiCode, FiAlignLeft, FiAlignCenter, FiAlignRight, FiAlignJustify, FiMinus, FiImage, FiTable, FiYoutube, FiFile, FiFileText, FiChevronDown, FiChevronUp, FiChevronLeft, FiChevronRight, FiX, FiMenu, FiPlus, FiSave, FiTrash2, FiEdit2, FiCopy } from 'react-icons/fi';
 import { TbStrikethrough } from 'react-icons/tb';
@@ -242,6 +244,8 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
     // YouTube embeds (paste a YouTube/Shorts URL, or use slash command)
     (YouTube as unknown as AnyExtension),
     ...KanbanExtensions,
+    // Standard HTML table support
+    ...HtmlTableExtensions,
     // Custom table extension with advanced features
     (TableExtension as unknown as AnyExtension),
     CodeBlockLowlight.configure({

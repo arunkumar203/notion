@@ -521,3 +521,47 @@ body {
 .event-dot:hover {
   transform: scale(1.2);
 }
+
+/* / * HTML Table Styles - for regular content tables */
+.editor-container .html-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 16px 0;
+  font-size: 14px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.editor-container .html-table td,
+.editor-container .html-table th {
+  padding: 8px 12px;
+  text-align: left;
+  border-right: 1px solid #e2e8f0;
+  border-bottom: 1px solid #e2e8f0;
+  vertical-align: top;
+}
+
+.editor-container .html-table th {
+  background-color: #f8fafc;
+  font-weight: 600;
+  color: #374151;
+}
+
+.editor-container .html-table tr:nth-child(even) td {
+  background-color: #f9fafb;
+}
+
+.editor-container .html-table tr:hover td {
+  background-color: #f1f5f9;
+}
+
+.editor-container .html-table td:last-child,
+.editor-container .html-table th:last-child {
+  border-right: none;
+}
+
+.editor-container .html-table tr:last-child td {
+  border-bottom: none;
+}

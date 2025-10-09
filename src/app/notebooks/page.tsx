@@ -9,7 +9,7 @@ import { useEmailVerification } from '@/hooks/useEmailVerification';
 import { useUserRole } from '@/hooks/useUserRole';
 import type { Page } from '@/context/NotebookContext';
 import { useRouter } from 'next/navigation';
-import { FiAlertCircle, FiPlus, FiLogOut, FiTrash2, FiMenu, FiCopy, FiCheck, FiX, FiInfo, FiShare2, FiLink, FiLock, FiChevronRight, FiShield, FiStar } from 'react-icons/fi';
+import { FiAlertCircle, FiPlus, FiLogOut, FiTrash2, FiMenu, FiCopy, FiCheck, FiX, FiInfo, FiShare2, FiLink, FiLock, FiChevronRight, FiShield, FiStar, FiDownload } from 'react-icons/fi';
 import Link from 'next/link';
 import { FaRegEdit } from 'react-icons/fa';
 import Editor from '@/components/Editor';
@@ -80,6 +80,7 @@ type PanelProps = {
   isDeleting?: (id: string) => boolean;
   // Optional moving indicator for a specific item (e.g., moving a page to secret)
   isMoving?: (id: string) => boolean;
+  isExporting?: (id: string) => boolean;
   enablePin?: boolean;
   isPinned?: (item: BasicItem) => boolean;
   onTogglePin?: (id: string, nextPinned: boolean) => void | Promise<void>;
@@ -105,6 +106,7 @@ const Panel = ({
   onReorder,
   isDeleting,
   isMoving,
+  isExporting,
   gotoPage,
   enablePin = false,
   isPinned,
@@ -242,6 +244,7 @@ const Panel = ({
                   onSelect(item.id);
                   gotoPage && gotoPage(item.id);
                 }}
+
                 draggable={enableDrag}
                 onDragStart={(e) => {
                   if (!enableDrag) return;
@@ -386,6 +389,31 @@ const Panel = ({
                                   title={`Rename ${title.slice(0, -1)}`}
                                 >
                                   <FaRegEdit size={14} />
+                                </button>
+                              )}
+                              {/* Export button for Topics, Sections, and Notebooks */}
+                              {(title === 'Topics' || title === 'Sections' || title === 'Notebooks') && (
+                                <button
+                                  type="button"
+                                  onClick={async (e) => {
+                                    e.stopPropagation();
+                                    if (title === 'Topics' && (window as any).handleExportTopic) {
+                                      await (window as any).handleExportTopic(item.id);
+                                    } else if (title === 'Sections' && (window as any).handleExportSection) {
+                                      await (window as any).handleExportSection(item.id);
+                                    } else if (title === 'Notebooks' && (window as any).handleExportNotebook) {
+                                      await (window as any).handleExportNotebook(item.id);
+                                    }
+                                  }}
+                                  className={`p-1 rounded hover:bg-gray-200 text-blue-600 ${isExporting && isExporting(item.id) ? 'opacity-60 cursor-wait' : ''}`}
+                                  title={`Export ${title.slice(0, -1)} to PDF`}
+                                  disabled={Boolean(isExporting && isExporting(item.id))}
+                                >
+                                  {isExporting && isExporting(item.id) ? (
+                                    <span className="inline-block w-3 h-3 border-2 border-blue-300 border-t-transparent rounded-full animate-spin" />
+                                  ) : (
+                                    <FiDownload size={14} />
+                                  )}
                                 </button>
                               )}
                               {onDelete && (
@@ -707,6 +735,353 @@ export default function NotebooksPage() {
   };
 
   const router = useRouter();
+
+  // Helper function to get page content directly from Firestore for export
+  const getPageContentForExport = async (pageId: string): Promise<string> => {
+    try {
+      if (!user) return '<p>No content</p>';
+
+      const pageDoc = await getDoc(doc(db, 'pages', pageId));
+      if (!pageDoc.exists()) return '<p>No content</p>';
+
+      const pageData: any = pageDoc.data() || {};
+      const ownerFromDoc = pageData.owner as string | undefined;
+
+      // Check ownership
+      if (ownerFromDoc && ownerFromDoc !== user.uid) {
+        return '<p>Access denied</p>';
+      }
+
+      return (pageData.content as string) || '<p>No content</p>';
+    } catch (error) {
+      console.error('Error getting page content for export:', error);
+      return '<p>Error loading content</p>';
+    }
+  };
+
+  // Export topic with all pages
+  const handleExportTopic = async (topicId: string) => {
+    if (!selectedNotebook || !selectedSection) return;
+
+    // Set loading state
+    setExportingTopics(prev => new Set(prev).add(topicId));
+
+    try {
+      const topicName = topics.find(t => t.id === topicId)?.name || 'Untitled Topic';
+
+      // Fetch all pages for this topic directly from database
+      const pagesRef = dbRef(rtdb, `notebooks/${selectedNotebook}/sections/${selectedSection}/topics/${topicId}/pages`);
+      const pagesSnapshot = await get(pagesRef);
+      const pagesData = pagesSnapshot.val() || {};
+
+      const topicPages = Object.entries(pagesData)
+        .map(([id, page]: [string, any]) => ({
+          id,
+          name: page.name ?? 'Untitled Page',
+          order: page.order ?? page.createdAt ?? 0,
+          parentPageId: page.parentPageId || null,
+        }));
+
+      if (topicPages.length === 0) {
+        alert('This topic has no pages to export.');
+        return;
+      }
+
+      // Organize pages hierarchically (root pages first, then their children)
+      const organizePages = (pages: any[]): any[] => {
+        const pageMap = new Map(pages.map(p => [p.id, p]));
+        const rootPages = pages.filter(p => !p.parentPageId);
+        const result: any[] = [];
+
+        const addPageAndChildren = (page: any) => {
+          result.push(page);
+          // Find and add children
+          const children = pages
+            .filter(p => p.parentPageId === page.id)
+            .sort((a, b) => a.order - b.order);
+          children.forEach(child => addPageAndChildren(child));
+        };
+
+        // Sort root pages and add them with their children
+        rootPages.sort((a, b) => a.order - b.order);
+        rootPages.forEach(rootPage => addPageAndChildren(rootPage));
+
+        return result;
+      };
+
+      const organizedPages = organizePages(topicPages);
+
+      // Fetch content for all pages (including children)
+      const pagesWithContent = await Promise.all(
+        organizedPages.map(async (page) => {
+          const content = await getPageContentForExport(page.id);
+          return {
+            name: page.name,
+            content: content,
+            parentPageId: page.parentPageId
+          };
+        })
+      );
+
+      // Create breadcrumb
+      const notebookName = notebooks.find(n => n.id === selectedNotebook)?.name || 'Notebook';
+      const sectionName = sections.find(s => s.id === selectedSection)?.name || 'Section';
+      const breadcrumb = `${notebookName} > ${sectionName} > ${topicName}`;
+
+      // Import and call export function
+      const { exportTopicToPDF } = await import('@/lib/pdf-export');
+      await exportTopicToPDF(topicName, pagesWithContent, breadcrumb);
+
+    } catch (error) {
+      console.error('Error exporting topic:', error);
+      alert('Failed to export topic. Please try again.');
+    } finally {
+      // Clear loading state
+      setExportingTopics(prev => {
+        const next = new Set(prev);
+        next.delete(topicId);
+        return next;
+      });
+    }
+  };
+
+  // Export section with all topics and pages
+  const handleExportSection = async (sectionId: string) => {
+    if (!selectedNotebook) return;
+
+    // Set loading state
+    setExportingSections(prev => new Set(prev).add(sectionId));
+
+    try {
+      const sectionName = sections.find(s => s.id === sectionId)?.name || 'Untitled Section';
+
+      // Fetch all topics directly from database
+      const topicsRef = dbRef(rtdb, `notebooks/${selectedNotebook}/sections/${sectionId}/topics`);
+      const topicsSnapshot = await get(topicsRef);
+      const topicsData = topicsSnapshot.val() || {};
+
+      const sectionTopics = Object.entries(topicsData).map(([id, topic]: [string, any]) => ({
+        id,
+        name: topic.name ?? 'Untitled Topic',
+        order: topic.order ?? topic.createdAt ?? 0,
+      }));
+
+      if (sectionTopics.length === 0) {
+        alert('This section has no topics to export.');
+        return;
+      }
+
+      // Sort topics by order
+      sectionTopics.sort((a, b) => a.order - b.order);
+
+      // Fetch content for all topics and their pages
+      const topicsWithContent = await Promise.all(
+        sectionTopics.map(async (topic) => {
+          // Fetch all pages for this topic directly from database
+          const pagesRef = dbRef(rtdb, `notebooks/${selectedNotebook}/sections/${sectionId}/topics/${topic.id}/pages`);
+          const pagesSnapshot = await get(pagesRef);
+          const pagesData = pagesSnapshot.val() || {};
+
+          const topicPages = Object.entries(pagesData)
+            .map(([id, page]: [string, any]) => ({
+              id,
+              name: page.name ?? 'Untitled Page',
+              order: page.order ?? page.createdAt ?? 0,
+              parentPageId: page.parentPageId || null,
+            }));
+
+          // Organize pages hierarchically
+          const organizePages = (pages: any[]): any[] => {
+            const rootPages = pages.filter(p => !p.parentPageId);
+            const result: any[] = [];
+
+            const addPageAndChildren = (page: any) => {
+              result.push(page);
+              const children = pages
+                .filter(p => p.parentPageId === page.id)
+                .sort((a, b) => a.order - b.order);
+              children.forEach(child => addPageAndChildren(child));
+            };
+
+            rootPages.sort((a, b) => a.order - b.order);
+            rootPages.forEach(rootPage => addPageAndChildren(rootPage));
+            return result;
+          };
+
+          const organizedPages = organizePages(topicPages);
+
+          const pagesWithContent = await Promise.all(
+            organizedPages.map(async (page) => {
+              const content = await getPageContentForExport(page.id);
+              return {
+                name: page.name,
+                content: content,
+                parentPageId: page.parentPageId
+              };
+            })
+          );
+
+          return {
+            name: topic.name,
+            pages: pagesWithContent
+          };
+        })
+      );
+
+      // Create breadcrumb
+      const notebookName = notebooks.find(n => n.id === selectedNotebook)?.name || 'Notebook';
+      const breadcrumb = `${notebookName} > ${sectionName}`;
+
+      // Import and call export function
+      const { exportSectionToPDF } = await import('@/lib/pdf-export');
+      await exportSectionToPDF(sectionName, topicsWithContent, breadcrumb);
+
+    } catch (error) {
+      console.error('Error exporting section:', error);
+      alert('Failed to export section. Please try again.');
+    } finally {
+      // Clear loading state
+      setExportingSections(prev => {
+        const next = new Set(prev);
+        next.delete(sectionId);
+        return next;
+      });
+    }
+  };
+
+  // Export notebook with all sections, topics, and pages
+  const handleExportNotebook = async (notebookId: string) => {
+    // Set loading state
+    setExportingNotebooks(prev => new Set(prev).add(notebookId));
+
+    try {
+      const notebookName = notebooks.find(n => n.id === notebookId)?.name || 'Untitled Notebook';
+
+      // Fetch all sections for this notebook directly from database
+      const sectionsRef = dbRef(rtdb, `notebooks/${notebookId}/sections`);
+      const sectionsSnapshot = await get(sectionsRef);
+      const sectionsData = sectionsSnapshot.val() || {};
+
+      const notebookSections = Object.entries(sectionsData).map(([id, section]: [string, any]) => ({
+        id,
+        name: section.name ?? 'Untitled Section',
+        order: section.order ?? section.createdAt ?? 0,
+      }));
+
+      if (notebookSections.length === 0) {
+        alert('This notebook has no sections to export.');
+        return;
+      }
+
+      // Sort sections by order
+      notebookSections.sort((a, b) => a.order - b.order);
+
+      // Fetch content for all sections, topics, and pages
+      const sectionsWithContent = await Promise.all(
+        notebookSections.map(async (section) => {
+          // Fetch all topics for this section directly from database
+          const topicsRef = dbRef(rtdb, `notebooks/${notebookId}/sections/${section.id}/topics`);
+          const topicsSnapshot = await get(topicsRef);
+          const topicsData = topicsSnapshot.val() || {};
+
+          const sectionTopics = Object.entries(topicsData).map(([id, topic]: [string, any]) => ({
+            id,
+            name: topic.name ?? 'Untitled Topic',
+            order: topic.order ?? topic.createdAt ?? 0,
+          }));
+
+          // Sort topics by order
+          sectionTopics.sort((a, b) => a.order - b.order);
+
+          const topicsWithContent = await Promise.all(
+            sectionTopics.map(async (topic) => {
+              // Fetch all pages for this topic directly from database
+              const pagesRef = dbRef(rtdb, `notebooks/${notebookId}/sections/${section.id}/topics/${topic.id}/pages`);
+              const pagesSnapshot = await get(pagesRef);
+              const pagesData = pagesSnapshot.val() || {};
+
+              const topicPages = Object.entries(pagesData)
+                .map(([id, page]: [string, any]) => ({
+                  id,
+                  name: page.name ?? 'Untitled Page',
+                  order: page.order ?? page.createdAt ?? 0,
+                  parentPageId: page.parentPageId || null,
+                }));
+
+              // Organize pages hierarchically
+              const organizePages = (pages: any[]): any[] => {
+                const rootPages = pages.filter(p => !p.parentPageId);
+                const result: any[] = [];
+
+                const addPageAndChildren = (page: any) => {
+                  result.push(page);
+                  const children = pages
+                    .filter(p => p.parentPageId === page.id)
+                    .sort((a, b) => a.order - b.order);
+                  children.forEach(child => addPageAndChildren(child));
+                };
+
+                rootPages.sort((a, b) => a.order - b.order);
+                rootPages.forEach(rootPage => addPageAndChildren(rootPage));
+                return result;
+              };
+
+              const organizedPages = organizePages(topicPages);
+
+              const pagesWithContent = await Promise.all(
+                organizedPages.map(async (page) => {
+                  const content = await getPageContentForExport(page.id);
+                  return {
+                    name: page.name,
+                    content: content,
+                    parentPageId: page.parentPageId
+                  };
+                })
+              );
+
+              return {
+                name: topic.name,
+                pages: pagesWithContent
+              };
+            })
+          );
+
+          return {
+            name: section.name,
+            topics: topicsWithContent
+          };
+        })
+      );
+
+      // Import and call export function
+      const { exportNotebookToPDF } = await import('@/lib/pdf-export');
+      await exportNotebookToPDF(notebookName, sectionsWithContent);
+
+    } catch (error) {
+      console.error('Error exporting notebook:', error);
+      alert('Failed to export notebook. Please try again.');
+    } finally {
+      // Clear loading state
+      setExportingNotebooks(prev => {
+        const next = new Set(prev);
+        next.delete(notebookId);
+        return next;
+      });
+    }
+  };
+
+  // Expose export functions to window for context menu
+  useEffect(() => {
+    (window as any).handleExportTopic = handleExportTopic;
+    (window as any).handleExportSection = handleExportSection;
+    (window as any).handleExportNotebook = handleExportNotebook;
+    return () => {
+      delete (window as any).handleExportTopic;
+      delete (window as any).handleExportSection;
+      delete (window as any).handleExportNotebook;
+    };
+  }, [handleExportTopic, handleExportSection, handleExportNotebook]);
+
   const [content, setContent] = useState('');
   const [characterCount, setCharacterCount] = useState(0);
   const [wordCount, setWordCount] = useState(0);
@@ -865,6 +1240,9 @@ export default function NotebooksPage() {
   const [localDeletingNotebooks, setLocalDeletingNotebooks] = useState<Set<string>>(new Set());
   const [localDeletingSections, setLocalDeletingSections] = useState<Set<string>>(new Set());
   const [localDeletingTopics, setLocalDeletingTopics] = useState<Set<string>>(new Set());
+  const [exportingTopics, setExportingTopics] = useState<Set<string>>(new Set());
+  const [exportingSections, setExportingSections] = useState<Set<string>>(new Set());
+  const [exportingNotebooks, setExportingNotebooks] = useState<Set<string>>(new Set());
   // Removed HeadingsNav feature; keep layout refs minimal
   const scrollRootRef = useRef<HTMLDivElement | null>(null);
   const editorWrapRef = useRef<HTMLDivElement | null>(null);
@@ -1649,6 +2027,44 @@ export default function NotebooksPage() {
                     <button
                       type="button"
                       className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-md border border-gray-200 text-gray-700 hover:bg-gray-50"
+                      onClick={async () => {
+                        if (!selectedPage) return;
+
+                        const pageName = pages.find(p => p.id === selectedPage)?.name || 'Untitled';
+
+                        try {
+                          // Get the most up-to-date content
+                          let pageContent = '';
+
+                          // First try to get content from editor if it's loaded
+                          if (editorRef.current?.getHTML) {
+                            pageContent = editorRef.current.getHTML();
+                          }
+
+                          // If no content from editor, get from Firestore
+                          if (!pageContent || pageContent.trim() === '' || pageContent === '<p></p>') {
+                            pageContent = await getPageContent(selectedPage);
+                          }
+
+                          // Fallback to current content state
+                          if (!pageContent) {
+                            pageContent = content || '';
+                          }
+
+                          const { exportPageToPDF } = await import('@/lib/pdf-export');
+                          await exportPageToPDF(pageName, pageContent);
+                        } catch (error) {
+                          console.error('Error exporting PDF:', error);
+                          alert('Failed to export PDF. Please try again.');
+                        }
+                      }}
+                      title="Export as PDF"
+                    >
+                      <FiDownload size={14} /> Export
+                    </button>
+                    <button
+                      type="button"
+                      className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-md border border-gray-200 text-gray-700 hover:bg-gray-50"
                       onClick={() => setShareOpen((v) => !v)}
                       ref={shareBtnRef}
                       title="Share"
@@ -2087,6 +2503,7 @@ export default function NotebooksPage() {
                     }
                   }}
                   isDeleting={(id) => localDeletingNotebooks.has(id)}
+                  isExporting={(id) => exportingNotebooks.has(id)}
                   loading={notebookLoading}
                 />
               </div>
@@ -2108,6 +2525,7 @@ export default function NotebooksPage() {
                     }
                   }}
                   isDeleting={(id) => localDeletingSections.has(id)}
+                  isExporting={(id) => exportingSections.has(id)}
                   loading={Boolean(selectedNotebook) && sectionsLoading}
                   enableDrag
                   onReorder={(ids) => { reorderSections(ids); }}
@@ -2145,6 +2563,7 @@ export default function NotebooksPage() {
                     }
                   }}
                   isDeleting={(id) => localDeletingTopics.has(id)}
+                  isExporting={(id) => exportingTopics.has(id)}
                   loading={Boolean(selectedSection) && topicsLoading}
                   enableDrag
                   onReorder={(ids) => { reorderTopics(ids); }}
