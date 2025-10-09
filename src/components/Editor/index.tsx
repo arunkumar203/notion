@@ -398,6 +398,25 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
       handlePaste: (view, event) => {
         try {
           const e = event as ClipboardEvent;
+
+          // Check for image files in clipboard first
+          if (e.clipboardData?.files && e.clipboardData.files.length > 0) {
+            const files = Array.from(e.clipboardData.files);
+            const imageFiles = files.filter(f => f.type.startsWith('image/'));
+
+            if (imageFiles.length > 0) {
+              e.preventDefault();
+              e.stopPropagation();
+
+              // Dispatch custom event to trigger upload from outside this scope
+              const customEvent = new CustomEvent('editor-paste-images', {
+                detail: { files: imageFiles }
+              });
+              document.dispatchEvent(customEvent);
+              return true;
+            }
+          }
+
           let text = e.clipboardData?.getData('text/plain')?.trim() || '';
           // If not a direct URL, try to extract href from HTML clipboard (e.g., pasting from browsers)
           if ((!text || !/^https?:\/\//i.test(text)) && e.clipboardData) {
@@ -2971,6 +2990,22 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
     }
     if (mountedRef.current) setUploadPos(null);
   }, [editor, startUploadAnim, stopUploadAnim]);
+
+  // Listen for paste image events from handlePaste
+  useEffect(() => {
+    const handlePasteImages = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      const files = customEvent.detail?.files;
+      if (files && Array.isArray(files) && files.length > 0) {
+        uploadFilesAtCaret(files);
+      }
+    };
+
+    document.addEventListener('editor-paste-images', handlePasteImages);
+    return () => {
+      document.removeEventListener('editor-paste-images', handlePasteImages);
+    };
+  }, [uploadFilesAtCaret]);
 
   // Accept OS file drops directly into the editor to upload at caret
   useEffect(() => {
