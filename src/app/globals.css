@@ -1,0 +1,567 @@
+@import "./kanban.css";
+@import "./table.css";
+
+
+
+@import "./andromeda-code.css";
+@import "tailwindcss";
+
+.editor-container table {
+  width: 100%;
+  max-width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  margin: 0;
+}
+
+.editor-container table,
+.editor-container th,
+.editor-container td {
+  border: 1px solid #94a3b8;
+}
+
+.editor-container th,
+.editor-container td {
+  padding: 6px 10px;
+  background-color: #ffffff;
+  position: relative;
+}
+
+.editor-container .table-handle-overlay {
+  position: absolute;
+  z-index: 30;
+  pointer-events: none;
+}
+
+.editor-container .table-handle {
+  pointer-events: auto;
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  border: 1px solid #1d4ed8;
+  background: rgba(37, 99, 235, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #1d4ed8;
+  cursor: col-resize;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.2);
+}
+
+.editor-container .table-handle::before {
+  content: '';
+  width: 9px;
+  height: 2px;
+  background-color: currentColor;
+}
+
+.editor-container .table-handle.vertical {
+  cursor: row-resize;
+}
+
+.editor-container .table-handle.vertical::before {
+  width: 2px;
+  height: 9px;
+}
+
+.editor-container .table-handle.action {
+  cursor: pointer;
+}
+
+.editor-container .table-handle.action::before {
+  display: none;
+}
+
+.editor-container .table-handle.action span {
+  font-size: 12px;
+  font-weight: 600;
+  color: inherit;
+}
+
+.ProseMirror .column-resize-handle {
+  position: absolute;
+  right: -2px;
+  top: 0;
+  bottom: 0;
+  width: 5px;
+  background: transparent;
+  cursor: col-resize;
+}
+
+.ProseMirror .column-resize-handle::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-left: 1px dotted rgba(37, 99, 235, 0.4);
+}
+
+.ProseMirror .column-resize-handle:hover::after {
+  border-color: rgba(37, 99, 235, 0.9);
+}
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+/* Scoped rich-text styles for the editor area */
+.editor-container {
+  /* Ensure readable line height */
+  line-height: 1.6;
+}
+
+.editor-container h1 {
+  font-size: 1.875rem;
+  /* text-3xl */
+  line-height: 2.25rem;
+  font-weight: 700;
+  margin-top: 1.25rem;
+  margin-bottom: 0.75rem;
+  transition: color 160ms ease, background-color 160ms ease;
+}
+
+.editor-container h2 {
+  font-size: 1.5rem;
+  /* text-2xl */
+  line-height: 2rem;
+  font-weight: 700;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.editor-container h3 {
+  font-size: 1.25rem;
+  /* text-xl */
+  line-height: 1.75rem;
+  font-weight: 600;
+  margin-top: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Inline heading (visual-only for partial selections) */
+.editor-container .inline-h1 {
+  font-size: 1.875rem;
+  line-height: 2.25rem;
+  font-weight: 700;
+}
+
+.editor-container .inline-h2 {
+  font-size: 1.5rem;
+  line-height: 2rem;
+  font-weight: 700;
+}
+
+.editor-container .inline-h3 {
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+  font-weight: 600;
+}
+
+.editor-container p {
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.editor-container ul {
+  list-style-type: disc;
+  padding-left: 1.25rem;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.editor-container ol {
+  list-style-type: decimal;
+  padding-left: 1.25rem;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.editor-container blockquote {
+  border-left: 4px solid #e5e7eb;
+  /* gray-200 */
+  padding-left: 0.75rem;
+  color: #4b5563;
+  /* gray-600 */
+  margin: 0.75rem 0;
+}
+
+.editor-container hr {
+  border: none;
+  border-top: 3px solid #d1d5db;
+  /* gray-300 */
+  margin: 1rem 0;
+}
+
+/* Make links look clickable inside the editor */
+.editor-container .ProseMirror a {
+  color: #2563eb;
+  /* blue-600 */
+  text-decoration: none;
+  cursor: pointer;
+  text-underline-offset: 2px;
+  transition: color 150ms ease, text-decoration-color 150ms ease;
+  position: relative;
+  /* for tooltip positioning */
+}
+
+.editor-container .ProseMirror a:hover {
+  color: #1d4ed8;
+  /* blue-700 */
+  text-decoration: underline;
+}
+
+/* Show destination URL as a small tooltip on hover */
+.editor-container .ProseMirror a:hover::after {
+  /* Disabled default URL tooltip to avoid showing raw href or query params */
+  content: '';
+}
+
+/* Tiptap task list (v3): keep checkbox and content side-by-side */
+.editor-container .ProseMirror ul[data-type="taskList"] {
+  margin: 0.5rem 0 !important;
+  padding-left: 0 !important;
+  list-style: none !important;
+}
+
+.editor-container .ProseMirror ul[data-type="taskList"] li {
+  list-style: none !important;
+  margin-left: 0 !important;
+}
+
+.editor-container .ProseMirror ul[data-type="taskList"]>li,
+.editor-container .ProseMirror ul[data-type="taskList"] li[data-type="taskItem"] {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: flex-start !important;
+  gap: 0.5rem !important;
+}
+
+.editor-container .ProseMirror ul[data-type="taskList"]>li>label,
+.editor-container .ProseMirror ul[data-type="taskList"] li label {
+  display: inline-flex !important;
+  align-items: flex-start !important;
+  margin-right: 0.5rem !important;
+  user-select: none !important;
+  width: auto !important;
+  flex: 0 0 auto !important;
+}
+
+.editor-container .ProseMirror ul[data-type="taskList"]>li>div,
+.editor-container .ProseMirror ul[data-type="taskList"]>li>div.content,
+.editor-container .ProseMirror ul[data-type="taskList"] li>div,
+.editor-container .ProseMirror ul[data-type="taskList"] li>div.content {
+  display: block !important;
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  margin-left: 0 !important;
+}
+
+.editor-container .ProseMirror ul[data-type="taskList"]>li>div>p,
+.editor-container .ProseMirror ul[data-type="taskList"]>li>div.content>p,
+.editor-container .ProseMirror ul[data-type="taskList"] li p {
+  margin: 0 !important;
+}
+
+.editor-container .ProseMirror ul[data-type="taskList"]>li input[type="checkbox"] {
+  margin-top: 0.25rem !important;
+  vertical-align: top !important;
+}
+
+/* Show scrollbars only on hover for left panels */
+.scrollbar-on-hover {
+  /* Firefox */
+  scrollbar-width: none;
+  /* hide */
+}
+
+.scrollbar-on-hover:hover {
+  scrollbar-width: thin;
+  /* show */
+}
+
+/* WebKit (Chrome, Edge, Safari) */
+.scrollbar-on-hover::-webkit-scrollbar {
+  width: 0px;
+  height: 0px;
+}
+
+.scrollbar-on-hover:hover::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.scrollbar-on-hover::-webkit-scrollbar-thumb {
+  background-color: rgba(100, 100, 100, 0.4);
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+.scrollbar-on-hover:hover::-webkit-scrollbar-thumb {
+  background-color: rgba(100, 100, 100, 0.65);
+}
+
+.scrollbar-on-hover::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Remove default outline from ProseMirror */
+.editor-container .ProseMirror {
+  outline: none;
+}
+
+/* Inline code moved to andromeda-code.css */
+
+/* Code blocks moved to andromeda-code.css */
+
+.input-number-nospin::-webkit-outer-spin-button,
+.input-number-nospin::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.input-number-nospin[type=number] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+/* Active heading highlight when visible/selected from the rail */
+.editor-container h1.active-heading {
+  color: #4f46e5;
+  /* indigo-600 */
+}
+
+/* Reset moved to andromeda-code.css */
+
+/* Token colors moved to andromeda-code.css */
+
+/* Links */
+.editor-container a {
+  color: #2563eb;
+  /* blue-600 */
+  text-decoration: underline;
+  text-decoration-color: #93c5fd;
+  /* blue-300 */
+  text-underline-offset: 2px;
+}
+
+.editor-container a:hover {
+  color: #1d4ed8;
+  /* blue-700 */
+}
+
+/* Tables */
+.editor-container table {
+  width: 100%;
+  border-collapse: collapse;
+  border-radius: 0.375rem;
+  overflow: hidden;
+}
+
+.editor-container th,
+.editor-container td {
+  border: 1px solid #e5e7eb;
+  /* gray-200 */
+  padding: 0.5rem 0.75rem;
+  vertical-align: top;
+}
+
+.editor-container thead th {
+  background-color: #f9fafb;
+  /* gray-50 */
+  color: #374151;
+  /* gray-700 */
+  font-weight: 600;
+}
+
+.editor-container tbody tr:nth-child(even) {
+  background-color: rgba(249, 250, 251, 0.5);
+  /* gray-50/50 */
+}
+
+/* Task list */
+.editor-container ul[data-type="taskList"] {
+  margin: 0.25rem 0;
+}
+
+/* TipTap Placeholder: show hint text on empty lines (paragraphs and list items) */
+.editor-container .ProseMirror p.is-editor-empty:first-child::before,
+.editor-container .ProseMirror p.is-empty::before,
+.editor-container .ProseMirror li.is-empty>p::before,
+/* TaskItem renders a div.content wrapper */
+.editor-container .ProseMirror li.is-empty>div.content>p.is-empty::before {
+  content: attr(data-placeholder);
+  color: #9ca3af;
+  /* gray-400 */
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+/* Editor uses app default font unless changed via the font picker */
+
+/* Fallback: when the decoration sets data-placeholder but classes differ, rely on :empty */
+.editor-container .ProseMirror p[data-placeholder]:empty::before,
+.editor-container .ProseMirror li p[data-placeholder]:empty::before,
+.editor-container .ProseMirror li div.content p[data-placeholder]:empty::before {
+  content: attr(data-placeholder);
+  color: #9ca3af;
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* --------------------------------------------- */
+
+
+
+
+/* ========= Kanban Table Styles ========= */
+
+/*
+ ========= Calendar Widget Animations ========= */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideInFromTop {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInFromBottom {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-in {
+  animation: fadeIn 0.2s ease-out;
+}
+
+.fade-in {
+  animation: fadeIn 0.2s ease-out;
+}
+
+.slide-in-from-top-2 {
+  animation: slideInFromTop 0.2s ease-out;
+}
+
+.slide-in-from-bottom-2 {
+  animation: slideInFromBottom 0.2s ease-out;
+}
+
+/* Calendar widget specific styles */
+.calendar-widget {
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Smooth hover transitions for calendar dates */
+.calendar-date-cell {
+  transition: background-color 0.15s ease, transform 0.1s ease;
+}
+
+.calendar-date-cell:hover {
+  transform: scale(1.05);
+}
+
+/* Event indicator dots */
+.event-dot {
+  transition: transform 0.2s ease;
+}
+
+.event-dot:hover {
+  transform: scale(1.2);
+}
+
+/* / * HTML Table Styles - for regular content tables */
+.editor-container .html-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 16px 0;
+  font-size: 14px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.editor-container .html-table td,
+.editor-container .html-table th {
+  padding: 8px 12px;
+  text-align: left;
+  border-right: 1px solid #e2e8f0;
+  border-bottom: 1px solid #e2e8f0;
+  vertical-align: top;
+}
+
+.editor-container .html-table th {
+  background-color: #f8fafc;
+  font-weight: 600;
+  color: #374151;
+}
+
+.editor-container .html-table tr:nth-child(even) td {
+  background-color: #f9fafb;
+}
+
+.editor-container .html-table tr:hover td {
+  background-color: #f1f5f9;
+}
+
+.editor-container .html-table td:last-child,
+.editor-container .html-table th:last-child {
+  border-right: none;
+}
+
+.editor-container .html-table tr:last-child td {
+  border-bottom: none;
+}
