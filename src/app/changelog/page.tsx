@@ -38,9 +38,8 @@ export default function ChangelogPage() {
               <ul className="mt-3 list-disc list-inside text-sm text-gray-800 space-y-1">
                 <li><strong>Neo4j Graph Database:</strong> Migrated RAG vector storage from Firestore to Neo4j Aura (cloud) for better performance and scalability.</li>
                 <li><strong>Graph-Based RAG:</strong> Implemented proper graph structure with User → Page → Chunk relationships and sequential NEXT_CHUNK links for enhanced context.</li>
-                <li><strong>2x Faster Queries:</strong> Vector similarity search now completes in ~1.5s vs ~3s (for 500 chunks) thanks to Neo4j's optimized graph queries.</li>
                 <li><strong>Better Context:</strong> RAG responses now include neighboring chunks automatically, providing richer context to AI for more accurate answers.</li>
-               
+
               </ul>
             </div>
             {/* v1.5 */}
