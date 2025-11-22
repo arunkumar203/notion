@@ -7,6 +7,8 @@ import { useAuth } from '@/context/AuthContext';
 import StarterKit from '@tiptap/starter-kit';
 import Code from '@tiptap/extension-code';
 import Link from '@tiptap/extension-link';
+import { Drawing } from './DrawingExtension';
+import InfiniteCanvas from './InfiniteCanvas';
 import Placeholder from '@tiptap/extension-placeholder';
 import React, { useEffect, useImperativeHandle, forwardRef, useState, useRef, useCallback, useLayoutEffect, useMemo } from 'react';
 import { TextSelection, NodeSelection } from 'prosemirror-state';
@@ -27,6 +29,8 @@ import KanbanExtensions from './extensions/Kanban';
 import TableExtension from './extensions/Table';
 import HtmlTableExtensions from './extensions/HtmlTable';
 import { MathInline, MathBlock, MathPasteHandler } from './extensions/Math';
+import DrawingLayer, { DrawingLayerHandle } from './DrawingLayer';
+import DrawingRibbon from './DrawingRibbon';
 
 import CharacterCount from '@tiptap/extension-character-count';
 import { FiBold, FiItalic, FiUnderline, FiLink, FiList, FiHash, FiCheckSquare, FiCode, FiAlignLeft, FiAlignCenter, FiAlignRight, FiAlignJustify, FiMinus, FiImage, FiTable, FiYoutube, FiFile, FiFileText, FiChevronDown, FiChevronUp, FiChevronLeft, FiChevronRight, FiX, FiMenu, FiPlus, FiSave, FiTrash2, FiEdit2, FiCopy } from 'react-icons/fi';
@@ -68,6 +72,14 @@ interface EditorProps {
     enablePasteRules?: boolean;
     extensions?: AnyExtension[]; // TipTap extensions list
     editable?: boolean;
+    // Drawing props
+    editorMode?: 'type' | 'draw';
+    drawTool?: 'pen' | 'highlighter' | 'eraser';
+    drawColor?: string;
+    drawSize?: number;
+    drawingLayerRef?: React.RefObject<DrawingLayerHandle | null>;
+    drawingStrokes?: any[];
+    onDrawingStrokesChange?: (strokes: any[]) => void;
   };
   onEditorReady?: (editor: TiptapEditor) => void;
 }
@@ -145,6 +157,22 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
 
   // Fallback if editor fails to initialize in time
   const [fallbackMode, setFallbackMode] = useState(false);
+
+  // Drawing props from config (passed from parent)
+  const editorMode = config?.editorMode || 'type';
+  const drawTool = config?.drawTool || 'pen';
+  const drawColor = config?.drawColor || '#000000';
+  const drawSize = config?.drawSize || 3;
+  const drawingLayerRef = config?.drawingLayerRef || useRef<DrawingLayerHandle>(null);
+  const drawingStrokes = config?.drawingStrokes || [];
+  const onDrawingStrokesChange = config?.onDrawingStrokesChange;
+
+  // Track canvas height to sync with editor content
+  const [drawingCanvasHeight, setDrawingCanvasHeight] = useState(2000);
+
+  // Throttle auto-expansion to prevent infinite loops
+  const lastExpansionTimeRef = useRef(0);
+  const expansionThrottleMs = 500; // Only expand once every 500ms
 
   // Track last applied resetKey/content and whether user has edited since then
   const lastAppliedResetKeyRef = useRef<string | undefined>(undefined);
@@ -247,6 +275,8 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
     ...KanbanExtensions,
     // Standard HTML table support
     ...HtmlTableExtensions,
+    // Drawing canvas with Perfect Freehand
+    (Drawing as unknown as AnyExtension),
     // Custom table extension with advanced features
     (TableExtension as unknown as AnyExtension),
     // Math/LaTeX support
@@ -593,6 +623,95 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
       });
     }, [onUpdate]),
   });
+
+  // Track if we've initialized height for this page
+  const heightInitializedRef = useRef<string | null>(null);
+  const lastMeasuredContentHeightRef = useRef(0);
+  const updateHeightRef = useRef<(() => void) | null>(null);
+
+  // Initialize and dynamically update canvas height
+  useEffect(() => {
+    if (!editor) return;
+    const editorElement = (editor as any).view?.dom as HTMLElement | null;
+    if (!editorElement) return;
+
+    const pageKey = resetKey || '';
+
+    // Reset initialization flag when page changes
+    if (heightInitializedRef.current !== pageKey) {
+      heightInitializedRef.current = pageKey;
+      lastMeasuredContentHeightRef.current = 0;
+    }
+
+    // Function to measure and update height
+    const updateHeight = () => {
+      requestAnimationFrame(() => {
+        // Temporarily remove minHeight to get accurate content height
+        const originalMinHeight = editorElement.style.minHeight;
+        editorElement.style.minHeight = 'auto';
+
+        // Force reflow to get accurate measurement
+        editorElement.offsetHeight;
+
+        // Get the actual content height using scrollHeight
+        const contentHeight = editorElement.scrollHeight;
+
+        // Restore original minHeight
+        editorElement.style.minHeight = originalMinHeight;
+
+        // Only update if content height changed significantly (more than 50px to catch AI updates)
+        if (Math.abs(contentHeight - lastMeasuredContentHeightRef.current) > 50) {
+          lastMeasuredContentHeightRef.current = contentHeight;
+
+          // Calculate new height: at least 2000px or content + 500px buffer
+          const newHeight = Math.max(2000, contentHeight + 500);
+
+          // console.log('Drawing canvas height update:', {
+          //   contentHeight,
+          //   newHeight,
+          //   pageKey
+          // });
+
+          // Set both canvas and editor to this height
+          setDrawingCanvasHeight(newHeight);
+          editorElement.style.minHeight = `${newHeight}px`;
+        }
+      });
+    };
+
+    // Store in ref so it can be called from AI completion
+    updateHeightRef.current = updateHeight;
+
+    // Initial measurement
+    setTimeout(updateHeight, 100);
+    setTimeout(updateHeight, 500);
+    setTimeout(updateHeight, 1000);
+
+    // Watch for content changes (e.g., AI generation)
+    const observer = new MutationObserver(() => {
+      updateHeight();
+    });
+
+    observer.observe(editorElement, {
+      childList: true,
+      subtree: true,
+      characterData: true
+    });
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [editor, resetKey]);
+
+  // Apply the canvas height to editor (keep them in sync)
+  useEffect(() => {
+    if (!editor) return;
+    const editorElement = (editor as any).view?.dom as HTMLElement | null;
+    if (editorElement) {
+      editorElement.style.minHeight = `${drawingCanvasHeight}px`;
+    }
+  }, [editor, drawingCanvasHeight]);
+
   useEffect(() => {
     return () => {
       // Clear any pending update timeouts
@@ -1647,6 +1766,10 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
       try { if (ctrl.signal.aborted) clearPending(); } catch { }
       setAiRunning(false);
       aiAbortRef.current = null;
+      // Update canvas height after AI generation completes
+      setTimeout(() => {
+        if (updateHeightRef.current) updateHeightRef.current();
+      }, 500);
       // Clear special edit context once finished
       aiEditSelectionRef.current = null;
       if (aiFirstChunkRef.current) {
@@ -1814,6 +1937,10 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
       setInlineLoaderOpen(false);
       setAiRunning(false);
       aiAbortRef.current = null;
+      // Update canvas height after AI generation completes
+      setTimeout(() => {
+        if (updateHeightRef.current) updateHeightRef.current();
+      }, 500);
       if (aiFirstChunkRef.current) {
         try {
           if (editor && aiEndPosRef.current !== null) {
@@ -4201,6 +4328,36 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
             }
           }}
         >
+          {/* Drawing Layer Overlay */}
+          <DrawingLayer
+            key={resetKey} // Force remount when page changes
+            ref={drawingLayerRef}
+            isActive={editorMode === 'draw'}
+            tool={drawTool}
+            color={drawColor}
+            size={drawSize}
+            onStrokesChange={onDrawingStrokesChange}
+            initialStrokes={drawingStrokes}
+            height={drawingCanvasHeight}
+            onRequestExpand={() => {
+              const now = Date.now();
+              if (now - lastExpansionTimeRef.current > expansionThrottleMs) {
+                lastExpansionTimeRef.current = now;
+                const newHeight = drawingCanvasHeight + 500;
+                setDrawingCanvasHeight(newHeight);
+
+                // Also update editor element height
+                if (editor) {
+                  const editorElement = (editor as any).view?.dom as HTMLElement | null;
+                  if (editorElement) {
+                    editorElement.style.minHeight = `${newHeight}px`;
+                  }
+                }
+              }
+            }}
+          />
+
+          {/* Editor Content - always visible, drawing layer overlays it */}
           <EditorContent editor={editor}
             onClickCapture={(e) => {
               // Intercept internal page links with href like "#page:<id>"

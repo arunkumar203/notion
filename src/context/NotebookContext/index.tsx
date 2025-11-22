@@ -34,6 +34,7 @@ export interface Page {
   owner?: string;
   pinned?: boolean;
   content?: string;
+  drawings?: any[]; // Drawing strokes data
   creating?: boolean;
 }
 

@@ -17,6 +17,8 @@ import Loader from '@/components/Loader';
 import GlobalSearch from '@/components/GlobalSearch';
 import TasksButton from '@/components/Tasks/TasksButton';
 import ChatButton from '@/components/Chat/ChatButton';
+import DrawingRibbon from '@/components/Editor/DrawingRibbon';
+import type { DrawingLayerHandle } from '@/components/Editor/DrawingLayer';
 import IntroTooltip from '@/components/IntroTooltip';
 import type { Editor as TiptapEditor } from '@tiptap/react';
 import { ref as dbRef, get, onValue, update } from 'firebase/database';
@@ -765,25 +767,30 @@ export default function NotebooksPage() {
   const router = useRouter();
 
   // Helper function to get page content directly from Firestore for export
-  const getPageContentForExport = async (pageId: string): Promise<string> => {
+  const getPageContentForExport = async (pageId: string): Promise<{ content: string; drawings: string }> => {
     try {
-      if (!user) return '<p>No content</p>';
+      if (!user) return { content: '<p>No content</p>', drawings: '' };
 
       const pageDoc = await getDoc(doc(db, 'pages', pageId));
-      if (!pageDoc.exists()) return '<p>No content</p>';
+      if (!pageDoc.exists()) return { content: '<p>No content</p>', drawings: '' };
 
       const pageData: any = pageDoc.data() || {};
       const ownerFromDoc = pageData.owner as string | undefined;
 
       // Check ownership
       if (ownerFromDoc && ownerFromDoc !== user.uid) {
-        return '<p>Access denied</p>';
+        return { content: '<p>Access denied</p>', drawings: '' };
       }
 
-      return (pageData.content as string) || '<p>No content</p>';
+      const content = (pageData.content as string) || '<p>No content</p>';
+      const drawings = (pageData.drawings as string) || '';
+
+      // console.log('Export: Page', pageId, 'has drawings:', drawings ? 'YES' : 'NO', drawings ? `(${drawings.length} chars)` : '');
+
+      return { content, drawings };
     } catch (error) {
       console.error('Error getting page content for export:', error);
-      return '<p>Error loading content</p>';
+      return { content: '<p>Error loading content</p>', drawings: '' };
     }
   };
 
@@ -842,10 +849,11 @@ export default function NotebooksPage() {
       // Fetch content for all pages (including children)
       const pagesWithContent = await Promise.all(
         organizedPages.map(async (page) => {
-          const content = await getPageContentForExport(page.id);
+          const { content, drawings } = await getPageContentForExport(page.id);
           return {
             name: page.name,
             content: content,
+            drawings: drawings,
             parentPageId: page.parentPageId
           };
         })
@@ -940,10 +948,11 @@ export default function NotebooksPage() {
 
           const pagesWithContent = await Promise.all(
             organizedPages.map(async (page) => {
-              const content = await getPageContentForExport(page.id);
+              const { content, drawings } = await getPageContentForExport(page.id);
               return {
                 name: page.name,
                 content: content,
+                drawings: drawings,
                 parentPageId: page.parentPageId
               };
             })
@@ -1058,10 +1067,11 @@ export default function NotebooksPage() {
 
               const pagesWithContent = await Promise.all(
                 organizedPages.map(async (page) => {
-                  const content = await getPageContentForExport(page.id);
+                  const { content, drawings } = await getPageContentForExport(page.id);
                   return {
                     name: page.name,
                     content: content,
+                    drawings: drawings,
                     parentPageId: page.parentPageId
                   };
                 })
@@ -1114,11 +1124,133 @@ export default function NotebooksPage() {
   const [characterCount, setCharacterCount] = useState(0);
   const [wordCount, setWordCount] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
+  const [isSavingDrawings, setIsSavingDrawings] = useState(false);
   const [lastUpdatedTs, setLastUpdatedTs] = useState<number | null>(null);
   const [lastUpdatedLabel, setLastUpdatedLabel] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [spellcheckEnabled, setSpellcheckEnabled] = useState<boolean>(false);
   const [viewOnlyEnabled, setViewOnlyEnabled] = useState<boolean>(false);
+
+  // Drawing mode state
+  const [editorMode, setEditorMode] = useState<'type' | 'draw'>('type');
+  const [drawTool, setDrawTool] = useState<'pen' | 'highlighter' | 'eraser'>('pen');
+  const [drawColor, setDrawColor] = useState('#0000FF'); // Blue default
+  const [drawSize, setDrawSize] = useState(3);
+  const drawingLayerRef = useRef<DrawingLayerHandle | null>(null);
+  const [drawingStrokes, setDrawingStrokes] = useState<any[]>([]);
+  const drawingsLoadedRef = useRef(false); // Track if drawings have been loaded for current page
+  const currentPageIdRef = useRef<string | null>(null); // Track current page ID for drawing saves
+
+  // Reset to pen when entering draw mode
+  useEffect(() => {
+    if (editorMode === 'draw') {
+      setDrawTool('pen');
+    }
+  }, [editorMode]);
+
+  const handleClearDrawing = () => {
+    if (drawingLayerRef.current && typeof drawingLayerRef.current.clearDrawing === 'function') {
+      drawingLayerRef.current.clearDrawing();
+    }
+    setDrawingStrokes([]);
+  };
+
+  // Save drawings to Firestore when they change
+  useEffect(() => {
+    // Don't save on initial load - only save after drawings have been loaded
+    if (!drawingsLoadedRef.current || !currentPageIdRef.current || !user) {
+      return;
+    }
+
+    const pageId = currentPageIdRef.current;
+
+    // Set saving state immediately
+    setIsSavingDrawings(true);
+
+    // Debounce the save
+    const timeoutId = setTimeout(async () => {
+      try {
+        const pageRef = doc(db, 'pages', pageId);
+        // Convert nested arrays to JSON string to avoid Firestore nested array limitation
+        const drawingsData = JSON.stringify(drawingStrokes);
+
+        // Use setDoc with merge to ensure document exists
+        await setDoc(pageRef, {
+          drawings: drawingsData,
+          lastUpdated: Date.now()
+        }, { merge: true });
+
+        // console.log('Drawings saved successfully for page', pageId, ':', drawingStrokes.length, 'strokes');
+      } catch (error) {
+        console.error('Error saving drawings:', error);
+      } finally {
+        setIsSavingDrawings(false);
+      }
+    }, 500);
+
+    return () => {
+      clearTimeout(timeoutId);
+      setIsSavingDrawings(false);
+    };
+  }, [drawingStrokes, user]);
+
+  // Load drawings when page changes
+  useEffect(() => {
+    const pageId = getPageId(selectedPage);
+
+    // Reset the loaded flag and update current page ID when page changes
+    drawingsLoadedRef.current = false;
+    currentPageIdRef.current = pageId;
+
+    const loadDrawings = async () => {
+      if (!pageId || !user) {
+        setDrawingStrokes([]);
+        drawingsLoadedRef.current = true; // Mark as loaded even if empty
+        currentPageIdRef.current = null;
+        return;
+      }
+
+      // console.log('Loading drawings for page:', pageId);
+
+      try {
+        const pageRef = doc(db, 'pages', pageId);
+        const pageSnap = await getDoc(pageRef);
+
+        if (pageSnap.exists()) {
+          const data = pageSnap.data();
+          // Parse JSON string back to array
+          if (data.drawings) {
+            try {
+              const parsedDrawings = typeof data.drawings === 'string'
+                ? JSON.parse(data.drawings)
+                : data.drawings;
+              // console.log('Loaded drawings for page', pageId, ':', parsedDrawings.length, 'strokes');
+              setDrawingStrokes(parsedDrawings);
+            } catch (parseError) {
+              console.error('Error parsing drawings:', parseError);
+              setDrawingStrokes([]);
+            }
+          } else {
+            // console.log('No drawings found for page', pageId);
+            setDrawingStrokes([]);
+          }
+        } else {
+          // console.log('Page document does not exist for', pageId);
+          setDrawingStrokes([]);
+        }
+      } catch (error) {
+        console.error('Error loading drawings:', error);
+        setDrawingStrokes([]);
+      } finally {
+        // Mark drawings as loaded after the load attempt
+        drawingsLoadedRef.current = true;
+      }
+    };
+
+    loadDrawings();
+    setEditorMode('type'); // Reset to type mode when switching pages
+  }, [selectedPage, user]);
+
   // Editable page title state
   const [pageTitle, setPageTitle] = useState('');
   const [titleError, setTitleError] = useState<string | null>(null);
@@ -2076,6 +2208,7 @@ export default function NotebooksPage() {
                         try {
                           // Get the most up-to-date content
                           let pageContent = '';
+                          let pageDrawings = '';
 
                           // First try to get content from editor if it's loaded
                           if (editorRef.current?.getHTML) {
@@ -2092,8 +2225,81 @@ export default function NotebooksPage() {
                             pageContent = content || '';
                           }
 
-                          const { exportPageToPDF } = await import('@/lib/pdf-export');
-                          await exportPageToPDF(pageName, pageContent);
+                          // Get drawings for the current page
+                          const pageId = getPageId(selectedPage);
+                          if (pageId) {
+                            const { drawings } = await getPageContentForExport(pageId);
+                            pageDrawings = drawings;
+                          }
+
+                          // Get editor dimensions for proper scaling
+                          let editorWidth = 800;
+                          let editorHeight = 1000;
+                          if (editorRef.current) {
+                            const editorElement = (editorRef.current as any).view?.dom as HTMLElement;
+                            if (editorElement) {
+                              editorWidth = editorElement.offsetWidth;
+                              editorHeight = editorElement.scrollHeight;
+                            }
+                          }
+
+                          // Ask user what to export
+                          const hasDrawings = pageDrawings && pageDrawings.length > 0;
+                          let exportChoice = 'text';
+                          
+                          if (hasDrawings) {
+                            // Create custom modal with radio buttons
+                            exportChoice = await new Promise<string>((resolve) => {
+                              const modal = document.createElement('div');
+                              modal.style.cssText = 'position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 9999;';
+                              
+                              modal.innerHTML = `
+                                <div style="background: white; padding: 24px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-width: 400px; width: 90%;">
+                                  <h3 style="margin: 0 0 16px 0; font-size: 18px; font-weight: 600; color: #1a1a1a;">Export Options</h3>
+                                  <div style="margin-bottom: 20px;">
+                                    <label style="display: flex; align-items: center; padding: 12px; border: 1px solid #e5e7eb; border-radius: 6px; margin-bottom: 8px; cursor: pointer;">
+                                      <input type="radio" name="exportType" value="text" checked style="margin-right: 12px; width: 16px; height: 16px; cursor: pointer;">
+                                      <span style="font-size: 14px; color: #374151;">Export Text Only</span>
+                                    </label>
+                                    <label style="display: flex; align-items: center; padding: 12px; border: 1px solid #e5e7eb; border-radius: 6px; cursor: pointer;">
+                                      <input type="radio" name="exportType" value="drawings" style="margin-right: 12px; width: 16px; height: 16px; cursor: pointer;">
+                                      <span style="font-size: 14px; color: #374151;">Export Drawings Only</span>
+                                    </label>
+                                  </div>
+                                  <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                                    <button id="cancelBtn" style="padding: 8px 16px; border: 1px solid #e5e7eb; border-radius: 6px; background: white; color: #374151; cursor: pointer; font-size: 14px;">Cancel</button>
+                                    <button id="exportBtn" style="padding: 8px 16px; border: none; border-radius: 6px; background: #3b82f6; color: white; cursor: pointer; font-size: 14px;">Export</button>
+                                  </div>
+                                </div>
+                              `;
+                              
+                              document.body.appendChild(modal);
+                              
+                              const exportBtn = modal.querySelector('#exportBtn') as HTMLButtonElement;
+                              const cancelBtn = modal.querySelector('#cancelBtn') as HTMLButtonElement;
+                              
+                              exportBtn.onclick = () => {
+                                const selected = modal.querySelector('input[name="exportType"]:checked') as HTMLInputElement;
+                                document.body.removeChild(modal);
+                                resolve(selected.value);
+                              };
+                              
+                              cancelBtn.onclick = () => {
+                                document.body.removeChild(modal);
+                                resolve('cancel');
+                              };
+                            });
+                            
+                            if (exportChoice === 'cancel') return;
+                          }
+
+                          const { exportPageToPDF, exportPageDrawingsOnly } = await import('@/lib/pdf-export');
+                          
+                          if (exportChoice === 'drawings') {
+                            await exportPageDrawingsOnly(pageName, pageDrawings, editorWidth, editorHeight);
+                          } else {
+                            await exportPageToPDF(pageName, pageContent, pageDrawings, editorWidth, editorHeight);
+                          }
                         } catch (error) {
                           console.error('Error exporting PDF:', error);
                           alert('Failed to export PDF. Please try again.');
@@ -2303,7 +2509,9 @@ export default function NotebooksPage() {
                 {/* Cover/Unsplash removed */}
                 {/* Status and controls above editor */}
                 <div className="mb-3 flex justify-end items-center gap-4">
-                  <div className="text-sm text-gray-500">{isSaving ? 'Saving changes…' : 'Synced'}</div>
+                  <div className="text-sm text-gray-500">
+                    {(isSaving || isSavingDrawings) ? 'Syncing…' : 'Synced'}
+                  </div>
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-gray-600 select-none">Spell check</span>
                     <button
@@ -2417,6 +2625,23 @@ export default function NotebooksPage() {
                 ) : null}
 
                 <div className="flex-1 flex flex-col mt-4 md:mt-6" ref={editorWrapRef}>
+                  {/* Drawing Ribbon - Above editor (sticky) */}
+                  {contentReady && (
+                    <div className="sticky top-0 z-30 bg-white border-b border-gray-200 shadow-sm">
+                      <DrawingRibbon
+                        mode={editorMode}
+                        onModeChange={setEditorMode}
+                        tool={drawTool}
+                        onToolChange={setDrawTool}
+                        color={drawColor}
+                        onColorChange={setDrawColor}
+                        size={drawSize}
+                        onSizeChange={setDrawSize}
+                        onClear={handleClearDrawing}
+                      />
+                    </div>
+                  )}
+
                   <div className="flex-1 relative min-h-[calc(100vh-200px)] editor-container bg-white" style={{ boxShadow: '0 0 0 1px #e5e7eb' }}>
                     {contentReady ? (
                       <Editor
@@ -2433,7 +2658,17 @@ export default function NotebooksPage() {
                         spellcheck={spellcheckEnabled}
                         lang="en-US"
                         className="h-full min-h-[300px] focus:outline-none text-gray-900"
-                        config={editorConfig}
+                        config={{
+                          ...editorConfig,
+                          // Pass drawing props to editor
+                          editorMode,
+                          drawTool,
+                          drawColor,
+                          drawSize,
+                          drawingLayerRef,
+                          drawingStrokes,
+                          onDrawingStrokesChange: setDrawingStrokes,
+                        }}
                         onRequestAI={() => setAiVisible(true)}
                       />
                     ) : (

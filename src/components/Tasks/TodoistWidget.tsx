@@ -172,18 +172,18 @@ export default function TodoistWidget({ onClose }: TodoistWidgetProps) {
         const isRecurring = task?.due?.recurring || task?.due?.is_recurring;
         const taskName = task?.content;
 
-        console.log('Completing task:', { taskId, taskName, isRecurring, due: task?.due });
+        // console.log('Completing task:', { taskId, taskName, isRecurring, due: task?.due });
 
         // Optimistic UI: Remove immediately
         setTasks(prev => prev.filter(t => t.id !== taskId));
 
         try {
             await completeTask(taskId);
-            console.log('Task completed successfully');
+            // console.log('Task completed successfully');
 
             // If recurring, fetch the task again to get next occurrence
             if (isRecurring) {
-                console.log('Task is recurring, fetching updated task and task list in parallel...');
+                // console.log('Task is recurring, fetching updated task and task list in parallel...');
 
                 // Prepare filter for task list
                 let filter = '';
@@ -201,7 +201,7 @@ export default function TodoistWidget({ onClose }: TodoistWidgetProps) {
                     getTasks(filter)
                 ]);
 
-                console.log('Updated task with next occurrence:', updatedTask);
+                // console.log('Updated task with next occurrence:', updatedTask);
                 setTasks(updatedTasks);
 
                 if (updatedTask?.due?.date) {
@@ -213,17 +213,17 @@ export default function TodoistWidget({ onClose }: TodoistWidgetProps) {
                         year: 'numeric'
                     });
                     const message = `Task completed! Next occurrence: ${formattedDate}`;
-                    console.log('Setting success message:', message);
+                    // console.log('Setting success message:', message);
                     setError(message);
                     setTimeout(() => setError(null), 5000);
                 } else {
                     const message = `Task completed!`;
-                    console.log('Setting success message (no due date):', message);
+                    // console.log('Setting success message (no due date):', message);
                     setError(message);
                     setTimeout(() => setError(null), 3000);
                 }
             } else {
-                console.log('Task is not recurring, no message to show');
+                // console.log('Task is not recurring, no message to show');
             }
         } catch (err) {
             console.error('Error completing task:', err);

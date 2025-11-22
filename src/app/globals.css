@@ -565,3 +565,58 @@ body {
 .editor-container .html-table tr:last-child td {
   border-bottom: none;
 }
+
+/* Print styles to fix drawing alignment and appearance */
+@media print {
+  @page {
+    margin: 0.5cm;
+    size: auto;
+  }
+
+  body {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  /* Force editor to maintain a fixed width to prevent text reflow */
+  .editor-container {
+    /* Further reduced width to strictly match typical prose width (approx 650px) */
+    width: 650px !important;
+    max-width: 650px !important;
+    min-width: 650px !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    /* Ensure the container doesn't get cut off if it overflows the page width */
+    overflow: visible !important;
+    /* Enforce font size and family to prevent scaling differences */
+    font-size: 16px !important;
+    font-family: var(--font-sans), Arial, Helvetica, sans-serif !important;
+  }
+
+  /* Ensure the drawing layer scales with the container */
+  .editor-container>div {
+    position: relative !important;
+  }
+
+  /* Thicken the drawing strokes for print */
+  .drawing-path {
+    /* Add a stroke to the filled path to make it thicker */
+    stroke: currentColor;
+    stroke-width: 1.5px;
+    /* Adjust thickness as needed */
+    stroke-linejoin: round;
+    stroke-linecap: round;
+    /* Ensure fill is preserved */
+    fill: currentColor;
+  }
+
+  /* Adjust opacity for print if needed */
+  .drawing-path[opacity="1"] {
+    opacity: 1 !important;
+  }
+
+  /* Make highlighter slightly more visible in print */
+  .drawing-path[opacity="0.4"] {
+    opacity: 0.5 !important;
+  }
+}

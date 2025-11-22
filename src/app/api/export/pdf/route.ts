@@ -17,8 +17,53 @@ export async function POST(request: NextRequest) {
                 <title>${title}</title>
                 <style>
                     @page {
-                        size: A4;
-                        margin: 15mm;
+                        size: auto;
+                        margin: 10mm;
+                    }
+                    
+                    @media print {
+                        /* Preserve exact layout for coordinate alignment */
+                        body {
+                            padding: 0 !important;
+                            margin: 0 !important;
+                        }
+                        
+                        .content {
+                            padding: 0 !important;
+                            /* Force exact width to match editor and ensure text wrapping is identical */
+                            margin: 0 auto !important;
+                            overflow: visible !important;
+                        }
+                        
+                        .content-layer {
+                            width: 100% !important;
+                            position: relative !important;
+                            box-sizing: border-box !important;
+                        }
+                        
+                        .drawing-layer {
+                            display: block !important;
+                            position: absolute !important;
+                            top: 0 !important;
+                            left: 0 !important;
+                            width: 100% !important;
+                            height: 100% !important;
+                            pointer-events: none !important;
+                        }
+                        
+                        .drawing-layer svg {
+                            display: block !important;
+                            position: absolute !important;
+                            top: 0 !important;
+                            left: 0 !important;
+                            width: 100% !important;
+                            height: 100% !important;
+                        }
+                        
+                        /* Prevent any width changes during print */
+                        * {
+                            box-sizing: border-box !important;
+                        }
                     }
                     
                     /* Don't force exact globally – it triggers rasterization */
@@ -53,21 +98,27 @@ export async function POST(request: NextRequest) {
                     }
                     
                     body {
-                        font-family: Arial, sans-serif;
-                        font-size: 12pt;
-                        line-height: 1.4;
-                        color: black;
+                        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+                        font-size: 16px;
+                        line-height: 1.6;
+                        color: #1a1a1a;
                         margin: 0;
                         padding: 0;
                         background: white;
+                        -webkit-font-smoothing: antialiased;
+                        -moz-osx-font-smoothing: grayscale;
+                        word-wrap: break-word;
+                        overflow-wrap: break-word;
                     }
                     
                     @media print {
                         /* Absolutely minimal print styles */
                         body {
-                            font-family: Arial, sans-serif !important;
-                            font-size: 12pt !important;
+                            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif !important;
+                            font-size: 16px !important;
                             color: black !important;
+                            -webkit-print-color-adjust: exact !important;
+                            print-color-adjust: exact !important;
                         }
                         
                         a {
@@ -86,36 +137,84 @@ export async function POST(request: NextRequest) {
                     }
                     
                     .page-title {
-                        font-size: 22pt;
+                        font-size: 28px;
                         font-weight: 700;
-                        margin: 0 0 12pt 0;
-                        padding-bottom: 12pt;
-                        border-bottom: 1.5pt solid #ccc;
+                        margin: 20px;
+                        padding-bottom: 16px;
+                        border-bottom: 2px solid #e5e7eb;
                         page-break-after: avoid;
+                        color: #1a1a1a;
                     }
                     
                     .content {
-                        margin-top: 8pt;
+                        margin: 0;
+                        padding: 20px;
+                        box-sizing: border-box;
+                    }
+                    
+                    /* Match TipTap editor styles exactly */
+                    .content p {
+                        margin: 0 0 1em 0;
+                        word-wrap: break-word;
+                        overflow-wrap: break-word;
+                    }
+                    
+                    .content > div {
+                        margin: 0;
+                        padding: 0;
+                        box-sizing: border-box;
+                    }
+                    
+                    /* Ensure content wrapper respects exact width */
+                    .content > div > div {
+                        box-sizing: border-box;
                     }
                     
                     h1, h2, h3, h4, h5, h6 {
                         font-weight: 700;
                         page-break-after: avoid;
-                        margin-top: 12pt;
-                        margin-bottom: 6pt;
+                        line-height: 1.3;
+                        color: #1a1a1a;
                     }
                     
-                    h1 { font-size: 18pt; margin-top: 14pt; }
-                    h2 { font-size: 16pt; margin-top: 12pt; }
-                    h3 { font-size: 14pt; margin-top: 10pt; }
-                    h4 { font-size: 12pt; margin-top: 8pt; }
-                    h5 { font-size: 11pt; margin-top: 6pt; }
-                    h6 { font-size: 10pt; margin-top: 6pt; }
+                    h1 { 
+                        font-size: 2em; 
+                        margin: 0.67em 0;
+                    }
+                    h2 { 
+                        font-size: 1.5em; 
+                        margin: 0.75em 0;
+                    }
+                    h3 { 
+                        font-size: 1.17em; 
+                        margin: 0.83em 0;
+                    }
+                    h4 { 
+                        font-size: 1em; 
+                        margin: 1em 0;
+                    }
+                    h5 { 
+                        font-size: 0.83em; 
+                        margin: 1.17em 0;
+                    }
+                    h6 { 
+                        font-size: 0.67em; 
+                        margin: 1.33em 0;
+                    }
                     
                     p {
-                        margin: 0 0 6pt 0;
+                        margin: 1em 0;
                         orphans: 2;
                         widows: 2;
+                        line-height: 1.6;
+                    }
+                    
+                    p:first-child {
+                        margin-top: 0;
+                    }
+                    
+                    p:last-child {
+                        margin-bottom: 0;
                     }
                     
                     strong, b {
@@ -127,12 +226,18 @@ export async function POST(request: NextRequest) {
                     }
                     
                     ul, ol {
-                        margin: 6pt 0;
-                        padding-left: 18pt;
+                        margin: 1em 0;
+                        padding-left: 1.25rem; /* Matched to globals.css (20px) */
+                        list-style-position: outside;
                     }
                     
                     li {
-                        margin: 2pt 0;
+                        margin: 0.25em 0;
+                        padding-left: 0.375rem;
+                    }
+                    
+                    li p {
+                        margin: 0;
                     }
                     
                     ul {
@@ -151,24 +256,38 @@ export async function POST(request: NextRequest) {
                         list-style-position: outside;
                     }
                     
+                    /* Nested lists */
+                    li > ul,
+                    li > ol {
+                        margin: 0.25em 0;
+                    }
+                    
                     code {
-                        font-family: 'Courier New', Courier, monospace;
-                        background-color: #f5f5f5;
-                        padding: 2pt 4pt;
-                        border-radius: 2pt;
-                        font-size: 10pt;
+                        font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', Courier, monospace;
+                        background-color: #f3f4f6;
+                        padding: 0.2em 0.4em;
+                        border-radius: 3px;
+                        font-size: 0.9em;
                     }
                     
                     pre {
-                        font-family: 'Courier New', Courier, monospace;
-                        background-color: #f5f5f5;
-                        padding: 10pt;
-                        border-radius: 4pt;
-                        font-size: 9pt;
-                        line-height: 1.4;
+                        font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', Courier, monospace;
+                        background-color: #1e1e1e;
+                        color: #d4d4d4;
+                        padding: 1em;
+                        border-radius: 6px;
+                        font-size: 14px;
+                        line-height: 1.5;
                         white-space: pre-wrap;
-                        margin: 10pt 0;
-                        border: 1pt solid #ddd;
+                        margin: 1em 0;
+                        overflow-x: auto;
+                    }
+                    
+                    pre code {
+                        background: none;
+                        padding: 0;
+                        color: inherit;
+                        font-size: inherit;
                     }
                     
                     blockquote {
@@ -239,6 +358,36 @@ export async function POST(request: NextRequest) {
                         height: auto;
                         page-break-inside: avoid;
                         margin: 8pt 0;
+                    }
+                    
+                    /* SVG drawings - only apply to standalone SVGs, not drawing layer */
+                    .content svg:not(.drawing-layer svg) {
+                        max-width: 100%;
+                        height: auto;
+                        page-break-inside: avoid;
+                        margin: 8pt 0;
+                        display: block;
+                    }
+                    
+                    /* Drawing layer SVG should maintain exact dimensions */
+                    .drawing-layer svg {
+                        max-width: none !important;
+                        max-height: none !important;
+                        width: auto !important;
+                        height: auto !important;
+                        display: block !important;
+                    }
+                    
+                    @media print {
+                        .content svg:not(.drawing-layer svg) {
+                            max-width: 100% !important;
+                            height: auto !important;
+                        }
+                        
+                        .drawing-layer svg {
+                            max-width: none !important;
+                            max-height: none !important;
+                        }
                     }
                     
                     a {
