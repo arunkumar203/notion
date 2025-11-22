@@ -142,10 +142,14 @@ export async function POST(request: NextRequest) {
         let pdfBuffer;
         
         try {
-            // Launch Puppeteer with more conservative settings for development
+            // Launch Puppeteer with Vercel-compatible settings
             browser = await puppeteer.launch({
                 headless: true,
-                timeout: 30000, // 30 second timeout
+                timeout: 30000,
+                // Use bundled Chromium for Vercel
+                executablePath: process.env.NODE_ENV === 'production' 
+                    ? '/opt/render/project/.render/chrome/opt/google/chrome/chrome'
+                    : undefined,
                 args: [
                     '--no-sandbox',
                     '--disable-setuid-sandbox',
@@ -155,7 +159,9 @@ export async function POST(request: NextRequest) {
                     '--disable-features=VizDisplayCompositor',
                     '--disable-background-timer-throttling',
                     '--disable-backgrounding-occluded-windows',
-                    '--disable-renderer-backgrounding'
+                    '--disable-renderer-backgrounding',
+                    '--single-process',
+                    '--no-zygote'
                 ]
             });
 

@@ -71,8 +71,8 @@ export async function exportPageToPDF(pageName: string, content: string, drawing
         // Get the actual rendered HTML from the editor to preserve exact layout
         const renderedContent = editorElement?.innerHTML || content;
 
-        // Call the Puppeteer API for server-side PDF generation
-        const response = await fetch('/api/export/pdf-puppeteer', {
+        // Call the original PDF API for browser printing
+        const response = await fetch('/api/export/pdf', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -80,29 +80,59 @@ export async function exportPageToPDF(pageName: string, content: string, drawing
             body: JSON.stringify({
                 title: pageName,
                 content: renderedContent,
-                editorWidth: contentWidth,
-                editorHeight: actualHeight
+                type: 'page'
             }),
         });
 
         if (!response.ok) {
-            throw new Error('Failed to generate PDF with Puppeteer');
+            throw new Error('Failed to generate PDF');
         }
 
-        // Get the PDF blob and download it
-        const pdfBlob = await response.blob();
-        const url = window.URL.createObjectURL(pdfBlob);
-        
-        // Create download link
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${pageName}.pdf`;
-        document.body.appendChild(a);
-        a.click();
-        
-        // Cleanup
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
+        const { html } = await response.json();
+
+        // Create iframe for printing
+        const iframe = document.createElement('iframe');
+        iframe.style.position = 'absolute';
+        iframe.style.left = '-9999px';
+        iframe.style.width = '210mm';
+        iframe.style.height = '297mm';
+        iframe.style.border = 'none';
+        document.body.appendChild(iframe);
+
+        const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+        if (!iframeDoc) {
+            document.body.removeChild(iframe);
+            throw new Error('Unable to create print document');
+        }
+
+        iframeDoc.open();
+        iframeDoc.write(html);
+        iframeDoc.close();
+
+        // Wait for content to load
+        await new Promise((resolve) => {
+            iframe.onload = resolve;
+            setTimeout(resolve, 500);
+        });
+
+        // Trigger print
+        iframe.contentWindow?.focus();
+        setTimeout(() => {
+            try {
+                iframe.contentWindow?.print();
+                setTimeout(() => {
+                    if (document.body.contains(iframe)) {
+                        document.body.removeChild(iframe);
+                    }
+                }, 1000);
+            } catch (error) {
+                console.error('Print error:', error);
+                if (document.body.contains(iframe)) {
+                    document.body.removeChild(iframe);
+                }
+                throw error;
+            }
+        }, 250);
 
         // Remove loading toast
         if (loadingToast && document.body.contains(loadingToast)) {
@@ -173,18 +203,15 @@ export async function exportPageDrawingsOnly(pageName: string, drawings: string,
         }
 
         // Call API to generate PDF with only drawings
-        const response = await fetch('/api/export/pdf-puppeteer', {
+        const response = await fetch('/api/export/pdf', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
                 title: `${pageName} - Drawings`,
-                content: '', // No text content
-                drawings: drawingsSVG,
-                editorWidth: fullWidth,
-                editorHeight: actualHeight,
-                drawingsOnly: true
+                content: drawingsSVG,
+                type: 'drawings'
             }),
         });
 
@@ -192,17 +219,49 @@ export async function exportPageDrawingsOnly(pageName: string, drawings: string,
             throw new Error('Failed to generate drawings PDF');
         }
 
-        const pdfBlob = await response.blob();
-        const url = window.URL.createObjectURL(pdfBlob);
-        
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${pageName}-drawings.pdf`;
-        document.body.appendChild(a);
-        a.click();
-        
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
+        const { html } = await response.json();
+
+        // Create iframe for printing drawings
+        const iframe = document.createElement('iframe');
+        iframe.style.position = 'absolute';
+        iframe.style.left = '-9999px';
+        iframe.style.width = '210mm';
+        iframe.style.height = '297mm';
+        iframe.style.border = 'none';
+        document.body.appendChild(iframe);
+
+        const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+        if (!iframeDoc) {
+            document.body.removeChild(iframe);
+            throw new Error('Unable to create print document');
+        }
+
+        iframeDoc.open();
+        iframeDoc.write(html);
+        iframeDoc.close();
+
+        await new Promise((resolve) => {
+            iframe.onload = resolve;
+            setTimeout(resolve, 500);
+        });
+
+        iframe.contentWindow?.focus();
+        setTimeout(() => {
+            try {
+                iframe.contentWindow?.print();
+                setTimeout(() => {
+                    if (document.body.contains(iframe)) {
+                        document.body.removeChild(iframe);
+                    }
+                }, 1000);
+            } catch (error) {
+                console.error('Print error:', error);
+                if (document.body.contains(iframe)) {
+                    document.body.removeChild(iframe);
+                }
+                throw error;
+            }
+        }, 250);
 
         if (loadingToast && document.body.contains(loadingToast)) {
             document.body.removeChild(loadingToast);
