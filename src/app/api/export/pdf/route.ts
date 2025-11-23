@@ -60,6 +60,227 @@ export async function POST(request: NextRequest) {
                             height: 100% !important;
                         }
                         
+                        /* Hide interactive elements during print */
+                        button,
+                        .add-card,
+                        .add-status,
+                        [data-testid*="add"],
+                        [class*="add-"],
+                        [class*="button"],
+                        .dropdown,
+                        input[type="button"],
+                        input[type="submit"],
+                        .interactive,
+                        .hover\\:,
+                        [class*="hover:"],
+                        .cursor-pointer,
+                        .manage-button,
+                        .kanban-controls,
+                        .table-controls {
+                            display: none !important;
+                        }
+                        
+                        /* Show select values as text for print */
+                        select {
+                            appearance: none !important;
+                            border: none !important;
+                            background: transparent !important;
+                            color: inherit !important;
+                            font-size: inherit !important;
+                            padding: 0.25rem 0.5rem !important;
+                            font-weight: 500 !important;
+                        }
+                        
+                        /* Convert select elements to text spans for print */
+                        .kt__select {
+                            appearance: none !important;
+                            border: none !important;
+                            padding: 0.25rem 0.5rem !important;
+                            border-radius: 4px !important;
+                            font-weight: 500 !important;
+                            color: white !important;
+                            text-align: center !important;
+                            min-width: 80px !important;
+                        }
+                        
+                        /* Style percentage bars for print */
+                        input[type="number"][value] {
+                            position: relative !important;
+                            background: linear-gradient(to right, #3b82f6 0%, #3b82f6 var(--progress, 0%), #e5e7eb var(--progress, 0%), #e5e7eb 100%) !important;
+                            border: 1px solid #d1d5db !important;
+                            border-radius: 4px !important;
+                            padding: 0.25rem 0.5rem !important;
+                            color: #1f2937 !important;
+                            font-weight: 500 !important;
+                        }
+
+                        /* Hide React-rendered Kanban elements in print, show only renderHTML output */
+                        @media print {
+                            /* Hide the React NodeView wrapper */
+                            .ProseMirror [data-node-view-wrapper] {
+                                display: none !important;
+                            }
+                            
+                            /* Show only the static HTML table from renderHTML */
+                            .kt-kanban .kt__table {
+                                display: table !important;
+                            }
+                        }
+                        
+                        /* Kanban Progress Bar Styles for Print */
+                        .kt__progress-cell {
+                            display: flex !important;
+                            align-items: center !important;
+                            gap: 8px !important;
+                        }
+                        .kt__progress-bar {
+                            flex: 1 !important;
+                            height: 8px !important;
+                            background: #e5e7eb !important;
+                            border-radius: 4px !important;
+                            overflow: hidden !important;
+                            min-width: 50px !important;
+                            -webkit-print-color-adjust: exact !important;
+                            print-color-adjust: exact !important;
+                        }
+                        .kt__progress-fill {
+                            height: 100% !important;
+                            background: #3b82f6 !important;
+                            border-radius: 4px !important;
+                            -webkit-print-color-adjust: exact !important;
+                            print-color-adjust: exact !important;
+                        }
+                        .kt__progress-input {
+                            display: none !important;
+                        }
+                        
+                        /* Convert Kanban board to table format for print */
+                        .kt-kanban .ktb__outer {
+                            display: block !important;
+                        }
+                        
+                        .kt-kanban .ktb__toolbar {
+                            display: none !important;
+                        }
+                        
+                        .kt-kanban .ktb__columns {
+                            display: table !important;
+                            width: 100% !important;
+                            border-collapse: collapse !important;
+                            table-layout: fixed !important;
+                        }
+                        
+                        .kt-kanban .ktb__column {
+                            display: table-cell !important;
+                            vertical-align: top !important;
+                            border: 1px solid #e5e7eb !important;
+                            padding: 0.75rem !important;
+                            width: auto !important;
+                        }
+                        
+                        .kt-kanban .ktb__column-header {
+                            font-weight: 600 !important;
+                            font-size: 1rem !important;
+                            margin-bottom: 0.75rem !important;
+                            padding-bottom: 0.5rem !important;
+                            border-bottom: 2px solid #d1d5db !important;
+                            text-align: center !important;
+                        }
+                        
+                        .kt-kanban .ktb__card {
+                            border: 1px solid #d1d5db !important;
+                            margin-bottom: 0.5rem !important;
+                            padding: 0.75rem !important;
+                            background: #f9fafb !important;
+                            border-radius: 4px !important;
+                            box-shadow: none !important;
+                        }
+                        
+                        .kt-kanban .ktb__card-title {
+                            font-weight: 500 !important;
+                            margin-bottom: 0.25rem !important;
+                        }
+                        
+                        .kt-kanban .ktb__card-meta {
+                            font-size: 0.875rem !important;
+                            color: #6b7280 !important;
+                        }
+                        
+                        /* Clean up tables for print */
+                        table {
+                            border-collapse: collapse !important;
+                            width: 100% !important;
+                        }
+
+                        /* Kanban Table Styles */
+                        .kt__container {
+                            width: 100% !important;
+                            margin-bottom: 1rem !important;
+                        }
+
+                        .kt__table {
+                            width: 100% !important;
+                            border-collapse: collapse !important;
+                            border: 1px solid #e5e7eb !important;
+                            table-layout: fixed !important; /* Ensure table respects width */
+                        }
+
+                        .kt__th {
+                            background-color: #f9fafb !important;
+                            padding: 0.5rem !important; /* Reduced padding */
+                            text-align: left !important;
+                            font-weight: 600 !important;
+                            color: #374151 !important;
+                            border-bottom: 1px solid #e5e7eb !important;
+                            border-right: 1px solid #e5e7eb !important;
+                            font-size: 12px !important; /* Slightly smaller font */
+                            overflow: hidden !important;
+                            text-overflow: ellipsis !important;
+                        }
+
+                        .kt__td {
+                            padding: 0.5rem !important; /* Reduced padding */
+                            border-bottom: 1px solid #e5e7eb !important;
+                            border-right: 1px solid #e5e7eb !important;
+                            vertical-align: middle !important;
+                            font-size: 12px !important;
+                            word-wrap: break-word !important; /* Wrap long text */
+                            overflow-wrap: break-word !important;
+                        }
+
+                        .kt__row:last-child .kt__td {
+                            border-bottom: none !important;
+                        }
+
+                        .kt__td:last-child, .kt__th:last-child {
+                            border-right: none !important;
+                        }
+
+                        .kt__select-cell, .kt__progress-cell, .kt__checkbox-cell {
+                            display: flex !important;
+                            align-items: center !important;
+                            justify-content: center !important;
+                        }
+
+                        .kt__input {
+                            width: 100% !important;
+                            border: none !important;
+                            background: transparent !important;
+                            padding: 0 !important;
+                            margin: 0 !important;
+                        }
+                        
+                        th, td {
+                            border: 1px solid #e5e7eb !important;
+                            padding: 0.5rem !important;
+                            text-align: left !important;
+                        }
+                        
+                        th {
+                            background-color: #f9fafb !important;
+                            font-weight: 600 !important;
+                        }
+                        
                         /* Prevent any width changes during print */
                         * {
                             box-sizing: border-box !important;
@@ -272,9 +493,10 @@ export async function POST(request: NextRequest) {
                     
                     pre {
                         font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', Courier, monospace;
-                        background-color: #1e1e1e;
-                        color: #d4d4d4;
+                        background-color: #ffffff;
+                        color: #1a1a1a;
                         padding: 1em;
+                        border: 1px solid #e5e7eb;
                         border-radius: 6px;
                         font-size: 14px;
                         line-height: 1.5;
@@ -497,6 +719,15 @@ export async function POST(request: NextRequest) {
                         margin-top: 6pt;
                     }
                 </style>
+
+
+
+                <script>
+                    // Minimal script to ensure clean print rendering
+                    window.addEventListener('load', function() {
+                        // Any final cleanup if needed
+                    });
+                </script>
             </head>
             <body>
                 <div class="page-title">${title}</div>

@@ -399,10 +399,16 @@ const Editor = forwardRef<TiptapEditor | null, EditorProps>(({
   ];
 
   // Combine and dedupe by extension.name (keep first occurrence)
-  const allExtensionsRaw: AnyExtension[] = [...baseExtensions, ...extraExtensions];
+  // We explicitly filter out Link and Underline from extraExtensions because we configure them in baseExtensions
+  const filteredExtraExtensions = extraExtensions.filter(ext => {
+    const name = ext?.name;
+    return name !== 'link' && name !== 'underline';
+  });
+
+  const allExtensionsRaw: AnyExtension[] = [...baseExtensions, ...filteredExtraExtensions];
   const extSeen = new Set<string>();
   const extensions: AnyExtension[] = allExtensionsRaw.filter((ext: any) => {
-    const n: string | undefined = ext?.name;
+    const n: string | undefined = ext?.name || ext?.options?.name;
     if (!n) return true;
     if (extSeen.has(n)) return false;
     extSeen.add(n);

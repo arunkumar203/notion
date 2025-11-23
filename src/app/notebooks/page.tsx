@@ -1198,6 +1198,9 @@ export default function NotebooksPage() {
   useEffect(() => {
     const pageId = getPageId(selectedPage);
 
+    // Immediately clear drawings when page changes to prevent showing old drawings
+    setDrawingStrokes([]);
+    
     // Reset the loaded flag and update current page ID when page changes
     drawingsLoadedRef.current = false;
     currentPageIdRef.current = pageId;

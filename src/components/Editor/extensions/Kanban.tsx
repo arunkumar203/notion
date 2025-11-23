@@ -352,19 +352,24 @@ const TableBoardView: React.FC<NodeViewProps> = ({ node, updateAttributes, edito
   const attrs = node.attrs as TableBoardAttrs;
   const columns = attrs.columns?.length ? attrs.columns : DEFAULT_COLUMNS;
   const rows = attrs.rows?.length ? attrs.rows : [];
-  
+
+  // Debug: Log the actual node attributes
+  console.log('Kanban node attrs:', attrs);
+  console.log('Columns:', columns);
+  console.log('Rows:', rows);
+
   // Force re-render when editor editable state changes
   const [, forceUpdate] = useState({});
   const editable = editor.isEditable;
-  
+
   useEffect(() => {
     const handleUpdate = () => {
       forceUpdate({});
     };
-    
+
     editor.on('update', handleUpdate);
     editor.on('transaction', handleUpdate);
-    
+
     return () => {
       editor.off('update', handleUpdate);
       editor.off('transaction', handleUpdate);
@@ -393,16 +398,17 @@ const TableBoardView: React.FC<NodeViewProps> = ({ node, updateAttributes, edito
     if (needsCols || needsRows) {
       const baseCols = needsCols ? DEFAULT_COLUMNS : columns;
       const nextRows = createDefaultRows(baseCols, DEFAULT_ROWS);
-      queueMicrotask(() => {
+      // Use setTimeout instead of queueMicrotask to avoid flushSync issues
+      setTimeout(() => {
         updateAttributes({
           columns: baseCols,
           columnCount: baseCols.length,
           rowCount: nextRows.length,
           rows: nextRows,
         });
-      });
+      }, 0);
     }
-  }, []);
+  }, [editable, attrs.columns?.length, rows.length]);
 
   const effectiveRows = rows.length ? rows : createDefaultRows(columns, DEFAULT_ROWS);
 
@@ -538,9 +544,11 @@ const TableBoardView: React.FC<NodeViewProps> = ({ node, updateAttributes, edito
 
   const setCell = (rowId: string, colId: string, value: CellValue) => {
     if (!editable) return;
+    console.log('setCell called:', { rowId, colId, value });
     const next = effectiveRows.map(r =>
       r.id === rowId ? { ...r, values: { ...r.values, [colId]: value }, updatedAt: new Date().toISOString() } : r
     );
+    console.log('Updated rows:', next);
     updateAttributes({ rows: next });
   };
 
@@ -857,6 +865,15 @@ const TableBoardView: React.FC<NodeViewProps> = ({ node, updateAttributes, edito
 
                     {columns.map((col) => {
                       const val = row.values[col.id] ?? createDefaultValue(col.type, col.options);
+                      // Debug logging
+                      if (col.type === 'select') {
+                        console.log(`Row ${row.id}, Col ${col.id}:`, {
+                          storedValue: row.values[col.id],
+                          fallbackValue: createDefaultValue(col.type, col.options),
+                          finalValue: val,
+                          options: col.options
+                        });
+                      }
                       return (
                         <td key={`${row.id}-${col.id}`} className="kt__td" data-type={col.type}>
                           {col.type === 'select' ? (
@@ -864,12 +881,17 @@ const TableBoardView: React.FC<NodeViewProps> = ({ node, updateAttributes, edito
                               <select
                                 className="kt__select"
                                 value={String(val)}
-                                onChange={(e) => setCell(row.id, col.id, e.target.value)}
+                                onChange={(e) => {
+                                  console.log('Select onChange fired:', { rowId: row.id, colId: col.id, newValue: e.target.value, oldValue: val });
+                                  setCell(row.id, col.id, e.target.value);
+                                }}
                                 disabled={!editable}
                                 style={{
                                   backgroundColor: col.options?.find(o => o.id === val)?.color,
                                   color: '#fff'
                                 }}
+                                data-stored-value={String(val)}
+                                data-column-options={JSON.stringify(col.options?.map(opt => ({ id: opt.id, label: opt.label })) || [])}
                               >
                                 {col.options?.map(opt => (
                                   <option key={opt.id} value={opt.id}>{opt.label}</option>
@@ -1031,7 +1053,7 @@ const TableBoardView: React.FC<NodeViewProps> = ({ node, updateAttributes, edito
                     <div className="ktb__column-title">
                       <span className="ktb__swatch" style={{ backgroundColor: opt.color }} />
                       <span className="ktb__name">{opt.label}</span>
-                      <span className="ktb__count">{rowsInGroup.length}</span>
+                      <span className="ktb__count">({rowsInGroup.length})</span>
                     </div>
                   </div>
 
@@ -1263,8 +1285,146 @@ const KanbanTableNode = Node.create<TableBoardAttrs>({
     return [{ tag: 'div[data-type="kanban-table"]' }];
   },
 
-  renderHTML({ HTMLAttributes }) {
-    return ['div', mergeAttributes(HTMLAttributes, { 'data-type': 'kanban-table' })];
+  renderHTML({ HTMLAttributes, node }) {
+    const attrs = node.attrs as TableBoardAttrs;
+    const columns = attrs.columns || DEFAULT_COLUMNS;
+    const rows = attrs.rows || [];
+
+    // Generate board view HTML for storage/export
+    const selectColumn = columns.find(col => col.type === 'select');
+
+    if (selectColumn) {
+      // Render as board with columns
+      const titleColumn = columns.find(c => c.type === 'text');
+      const groupOptions = selectColumn.options || [];
+
+      // Group rows by status
+      const grouped: Record<string, TableRow[]> = {};
+      groupOptions.forEach(opt => {
+        grouped[opt.id] = [];
+      });
+
+      rows.forEach(row => {
+        const statusValue = row.values[selectColumn.id];
+        if (statusValue && grouped[statusValue as string]) {
+          grouped[statusValue as string].push(row);
+        }
+      });
+
+      const boardHTML: any = [
+        'div',
+        mergeAttributes(HTMLAttributes, { 'data-type': 'kanban-table', class: 'kt-kanban' }),
+        ['div', { class: 'ktb__columns' },
+          ...groupOptions.map(opt => [
+            'div',
+            { class: 'ktb__column' },
+            ['div', { class: 'ktb__column-header' },
+              ['div', { class: 'ktb__column-title' },
+                ['span', { class: 'ktb__swatch', style: `background-color: ${opt.color}` }],
+                ['span', { class: 'ktb__name' }, opt.label],
+                ['span', { class: 'ktb__count' }, `(${grouped[opt.id]?.length || 0})`]
+              ]
+            ],
+            ['div', { class: 'ktb__cards' },
+              ...(grouped[opt.id] || []).map(row => {
+                const title = titleColumn ? (row.values[titleColumn.id] || 'Untitled') : 'Untitled';
+                const createdDate = row.createdAt ? new Date(row.createdAt).toLocaleString('en-US', {
+                  month: 'short',
+                  day: 'numeric',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                }) : '';
+
+                return [
+                  'div',
+                  { class: 'ktb__card' },
+                  ['div', { class: 'ktb__card-title' }, String(title)],
+                  ['div', { class: 'ktb__card-meta' },
+                    ['span', { class: 'ktb__meta-item' }, `Created ${createdDate}`]
+                  ]
+                ];
+              })
+            ]
+          ])
+        ]
+      ];
+
+      return boardHTML;
+    }
+
+    // Fallback to table if no select column
+    const tableHTML: any = [
+      'div',
+      mergeAttributes(HTMLAttributes, { 'data-type': 'kanban-table', class: 'kt-kanban' }),
+      [
+        'table',
+        { class: 'kt__table', style: 'width: 100%; border-collapse: collapse; table-layout: fixed;' },
+        [
+          'thead',
+          {},
+          [
+            'tr',
+            { class: 'kt__header-row' },
+            ...columns.map(col => ['th', { class: 'kt__th', style: 'border: 1px solid #e5e7eb; padding: 0.5rem; background-color: #f9fafb; font-weight: 600; text-align: left;' }, col.name])
+          ]
+        ],
+        [
+          'tbody',
+          {},
+          ...rows.map(row => [
+            'tr',
+            { class: 'kt__row' },
+            ...columns.map(col => {
+              const val = row.values[col.id] ?? '';
+              if (col.type === 'select' && col.options) {
+                const option = col.options.find(opt => opt.id === val);
+                const label = option ? option.label : 'Not Started';
+                const color = option ? option.color : '#6b7280';
+                return [
+                  'td',
+                  { class: 'kt__td', style: 'border: 1px solid #e5e7eb; padding: 0.5rem;' },
+                  [
+                    'span',
+                    {
+                      class: 'kt__select-display',
+                      style: `background-color: ${color}; color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-weight: 500; text-align: center; min-width: 80px; display: inline-block;`
+                    },
+                    label
+                  ]
+                ];
+              } else if (col.type === 'progress') {
+                const progress = Number(val) || 0;
+                return [
+                  'td',
+                  { class: 'kt__td', style: 'border: 1px solid #e5e7eb; padding: 0.5rem;' },
+                  [
+                    'div',
+                    { style: 'display: flex; align-items: center; gap: 8px;' },
+                    [
+                      'div',
+                      { style: 'flex: 1; height: 20px; background-color: #e5e7eb; border-radius: 10px; overflow: hidden; position: relative;' },
+                      ['div', { style: `width: ${progress}%; height: 100%; background-color: #3b82f6; position: absolute; top: 0; left: 0;` }]
+                    ],
+                    ['span', { style: 'font-size: 12px; color: #374151; white-space: nowrap;' }, `${progress}%`]
+                  ]
+                ];
+              } else if (col.type === 'checkbox') {
+                return [
+                  'td',
+                  { class: 'kt__td', style: 'border: 1px solid #e5e7eb; padding: 0.5rem; text-align: center;' },
+                  ['input', { type: 'checkbox', checked: Boolean(val) ? 'checked' : null, disabled: 'disabled' }]
+                ];
+              } else {
+                return ['td', { class: 'kt__td', style: 'border: 1px solid #e5e7eb; padding: 0.5rem;' }, String(val)];
+              }
+            })
+          ])
+        ]
+      ]
+    ];
+
+    return tableHTML;
   },
 
   addNodeView() {
