@@ -18,7 +18,7 @@
 /out/
 /req/
 /.claude/
-/docs/
+
 
 # production
 /build

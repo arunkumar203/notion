@@ -1218,9 +1218,7 @@ export const NotebookProvider = ({ children }: { children: React.ReactNode }) =>
   };
   return (
     <NotebookContext.Provider value={contextValue}>
-      {React.Children.map(children, (child, index) => (
-        <React.Fragment key={(child as any)?.key ?? `nbp-${index}`}>{child}</React.Fragment>
-      ))}
+      {children}
     </NotebookContext.Provider>
   );
 }

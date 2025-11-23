@@ -36,16 +36,13 @@ export default function ChangelogPage() {
             <div>
               <div className="inline-flex items-center rounded-md bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 ring-1 ring-inset ring-emerald-200">v1.7</div>
               <ul className="mt-3 list-disc list-inside text-sm text-gray-800 space-y-1">
+                <li><strong>System Maintenance Mode:</strong> Admin-controlled system-wide maintenance mode with custom messaging, admin bypass, and public path access for login/signup.</li>
                 <li><strong>OneNote-Style Drawing:</strong> Hybrid drawing layer that overlays the text editor, allowing you to draw anywhere on your notes without disrupting text content.</li>
                 <li><strong>Drawing Tools:</strong> Pen, highlighter, and eraser tools with customizable colors and sizes for natural handwriting and annotations.</li>
                 <li><strong>Perfect Freehand:</strong> Smooth, pressure-sensitive strokes using the Perfect Freehand library for a natural drawing experience.</li>
-                <li><strong>Auto-Expansion:</strong> Canvas automatically expands when drawing near the bottom edge, with throttled expansion to prevent performance issues.</li>
                 <li><strong>Height Synchronization:</strong> Drawing canvas and text editor heights stay perfectly synchronized, with dynamic updates after AI content generation.</li>
-                {/* <li><strong>Mode Switching:</strong> Seamlessly switch between Type and Draw modes using the ribbon toolbar.</li> */}
-                {/* <li><strong>Modern Ribbon UI:</strong> Clean, OneNote-inspired ribbon interface with all drawing controls organized and easily accessible.</li> */}
                 <li><strong>Color Presets:</strong> 10 preset colors plus custom color picker for unlimited color options.</li>
-                {/* <li><strong>Per-Page Persistence:</strong> Drawings are saved per page with proper JSON serialization to Firestore.</li> */}
-                {/* <li><strong>PDF Export with Drawings:</strong> Drawings are automatically included when exporting pages, topics, sections, or notebooks to PDF as high-quality SVG graphics.</li> */}
+                
               </ul>
             </div>
             {/* v1.6 */}

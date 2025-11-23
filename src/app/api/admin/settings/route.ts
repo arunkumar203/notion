@@ -51,6 +51,8 @@ export async function GET() {
         homePageMessage: rawSettings?.homePageMessage ?? '',
         onboardingMandatory: rawSettings?.onboardingMandatory ?? false,
         allowNewUserSignup: rawSettings?.allowNewUserSignup ?? true,
+        maintenanceMode: rawSettings?.maintenanceMode ?? false,
+        maintenanceMessage: rawSettings?.maintenanceMessage ?? '',
       };
 
       return NextResponse.json({ settings });
@@ -102,9 +104,9 @@ export async function POST(request: Request) {
 
     // Get the settings from request body
     const body = await request.json().catch(() => ({}));
-    const { emailSendingEnabled, showCreatorAttribution, homePageMessage, onboardingMandatory, allowNewUserSignup } = body || {};
+    const { emailSendingEnabled, showCreatorAttribution, homePageMessage, onboardingMandatory, allowNewUserSignup, maintenanceMode, maintenanceMessage } = body || {};
 
-    if (typeof emailSendingEnabled !== 'boolean' && typeof showCreatorAttribution !== 'boolean' && typeof homePageMessage !== 'string' && typeof onboardingMandatory !== 'boolean' && typeof allowNewUserSignup !== 'boolean') {
+    if (typeof emailSendingEnabled !== 'boolean' && typeof showCreatorAttribution !== 'boolean' && typeof homePageMessage !== 'string' && typeof onboardingMandatory !== 'boolean' && typeof allowNewUserSignup !== 'boolean' && typeof maintenanceMode !== 'boolean' && typeof maintenanceMessage !== 'string') {
       return jsonError(400, 'At least one valid setting must be provided');
     }
 
@@ -134,6 +136,14 @@ export async function POST(request: Request) {
         updates.allowNewUserSignup = allowNewUserSignup;
       }
 
+      if (typeof maintenanceMode === 'boolean') {
+        updates.maintenanceMode = maintenanceMode;
+      }
+
+      if (typeof maintenanceMessage === 'string') {
+        updates.maintenanceMessage = maintenanceMessage;
+      }
+
       // Update admin settings in RTDB
       await admin.database().ref('adminSettings').update(updates);
 
@@ -152,6 +162,12 @@ export async function POST(request: Request) {
       }
       if (typeof allowNewUserSignup === 'boolean') {
         responseSettings.allowNewUserSignup = allowNewUserSignup;
+      }
+      if (typeof maintenanceMode === 'boolean') {
+        responseSettings.maintenanceMode = maintenanceMode;
+      }
+      if (typeof maintenanceMessage === 'string') {
+        responseSettings.maintenanceMessage = maintenanceMessage;
       }
 
       return NextResponse.json({

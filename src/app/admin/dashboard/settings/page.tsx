@@ -13,6 +13,8 @@ interface AdminSettings {
     homePageMessage: string;
     onboardingMandatory: boolean;
     allowNewUserSignup: boolean;
+    maintenanceMode: boolean;
+    maintenanceMessage: string;
 }
 
 export default function AdminSettingsPage() {
@@ -25,6 +27,8 @@ export default function AdminSettingsPage() {
         homePageMessage: '',
         onboardingMandatory: false,
         allowNewUserSignup: true,
+        maintenanceMode: false,
+        maintenanceMessage: '',
     });
     const [loading, setLoading] = useState(true);
     const [savingKey, setSavingKey] = useState<keyof AdminSettings | null>(null);
@@ -78,6 +82,8 @@ export default function AdminSettingsPage() {
                     homePageMessage: data.settings?.homePageMessage ?? '',
                     onboardingMandatory: data.settings?.onboardingMandatory ?? false,
                     allowNewUserSignup: data.settings?.allowNewUserSignup ?? true,
+                    maintenanceMode: data.settings?.maintenanceMode ?? false,
+                    maintenanceMessage: data.settings?.maintenanceMessage ?? '',
                 });
             } catch (error: any) {
                 console.error('Error fetching settings:', error);
@@ -121,6 +127,8 @@ export default function AdminSettingsPage() {
                     successMessage = `Onboarding ${newValue ? 'made mandatory' : 'made optional'} successfully`;
                 } else if (key === 'allowNewUserSignup') {
                     successMessage = `New user signup ${newValue ? 'enabled' : 'disabled'} successfully`;
+                } else if (key === 'maintenanceMode') {
+                    successMessage = `Maintenance mode ${newValue ? 'enabled' : 'disabled'} successfully`;
                 }
 
                 setSuccess(successMessage);
@@ -165,10 +173,41 @@ export default function AdminSettingsPage() {
         }
     };
 
+    const handleSaveMaintenanceMessage = async () => {
+        if (!isRootAdmin || savingMessage) return;
+
+        setSavingMessage(true);
+        setError(null);
+        setSuccess(null);
+
+        try {
+            const response = await fetch('/api/admin/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ maintenanceMessage: settings.maintenanceMessage }),
+                credentials: 'include'
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                setSuccess('Maintenance message updated successfully');
+                setTimeout(() => setSuccess(null), 3000);
+            } else {
+                setError(result.error || 'Failed to update maintenance message');
+            }
+        } catch (error: any) {
+            setError(`Error: ${error.message}`);
+        } finally {
+            setSavingMessage(false);
+        }
+    };
+
     const isSavingEmail = savingKey === 'emailSendingEnabled';
     const isSavingAttribution = savingKey === 'showCreatorAttribution';
     const isSavingOnboarding = savingKey === 'onboardingMandatory';
     const isSavingSignup = savingKey === 'allowNewUserSignup';
+    const isSavingMaintenance = savingKey === 'maintenanceMode';
 
     // Show loading while checking auth
     if (authLoading || loading) {
@@ -202,7 +241,7 @@ export default function AdminSettingsPage() {
                             </Link>
                             <FiSettings className="h-8 w-8 text-indigo-600 mr-3" />
                             <div>
-                                <h1 className="text-2xl font-bold text-gray-900">Admin Settings</h1>
+                                <h1 className="text-2xl font-bold text-gray-900">System Settings & Maintenance</h1>
                                 <p className="text-sm text-gray-500">Manage system-wide settings</p>
                             </div>
                         </div>
@@ -388,6 +427,73 @@ export default function AdminSettingsPage() {
 
                     {/* Right Column */}
                     <div className="space-y-8">
+
+                        {/* Maintenance Mode Settings */}
+                        <div className="bg-gradient-to-br from-red-50 to-rose-50 shadow-lg rounded-2xl border border-red-100 p-6 hover:shadow-xl transition-shadow duration-300">
+                            <div className="flex items-center mb-6">
+                                <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-red-600 to-red-700 rounded-xl flex items-center justify-center shadow-lg">
+                                    <FiSettings className="h-6 w-6 text-white" />
+                                </div>
+                                <div className="ml-4">
+                                    <h3 className="text-xl font-bold text-gray-900">System Maintenance</h3>
+                                    <p className="text-sm text-gray-600 font-medium">Site Availability</p>
+                                </div>
+                            </div>
+
+                            <div className="space-y-4">
+                                <div className="bg-white/70 backdrop-blur-sm rounded-xl p-4 border border-white/50">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <div className="flex-1">
+                                            <h4 className="text-sm font-semibold text-gray-900">Maintenance Mode</h4>
+                                            <p className="text-xs text-gray-600 mt-1">Restrict access to admins only</p>
+                                            <p className="text-xs text-gray-500 mt-0.5 italic">Default: "We're currently performing scheduled maintenance to improve your experience."</p>
+                                        </div>
+                                        <div className="flex items-center space-x-3">
+                                            <span className={`text-xs font-bold px-2 py-1 rounded-full ${settings.maintenanceMode ? 'text-red-700 bg-red-100' : 'text-green-700 bg-green-100'}`}>
+                                                {isSavingMaintenance ? 'Updating...' : (settings.maintenanceMode ? 'Active' : 'Inactive')}
+                                            </span>
+                                            <button
+                                                onClick={() => handleToggleSetting('maintenanceMode')}
+                                                disabled={isSavingMaintenance || !isRootAdmin}
+                                                className={`relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 ${settings.maintenanceMode ? 'bg-red-600' : 'bg-gray-300'} ${(isSavingMaintenance || !isRootAdmin) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                                            >
+                                                <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${settings.maintenanceMode ? 'translate-x-5' : 'translate-x-0'}`} />
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* Maintenance Message Input */}
+                                    <div className="mt-4 pt-4 border-t border-gray-100">
+                                        <label htmlFor="maintenanceMessage" className="block text-xs font-medium text-gray-700 mb-2">
+                                            Maintenance Message (Optional)
+                                        </label>
+                                        <div className="flex space-x-2">
+                                            <input
+                                                id="maintenanceMessage"
+                                                type="text"
+                                                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 disabled:bg-gray-100 disabled:text-gray-500 text-sm"
+                                                placeholder="We'll be back soon..."
+                                                value={settings.maintenanceMessage}
+                                                onChange={(e) => setSettings(prev => ({ ...prev, maintenanceMessage: e.target.value }))}
+                                                disabled={!isRootAdmin}
+                                            />
+                                            <button
+                                                onClick={handleSaveMaintenanceMessage}
+                                                disabled={savingMessage || !isRootAdmin}
+                                                className={`px-3 py-2 text-xs font-medium rounded-lg transition-colors ${savingMessage || !isRootAdmin ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-gray-800 text-white hover:bg-gray-900'}`}
+                                            >
+                                                Save
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div className="text-xs text-gray-500 bg-gray-50 rounded-lg p-3 mt-3">
+                                        <strong>When active:</strong> Only Root Admins and Admins can access the app. All other users will see a maintenance screen.<br />
+                                        <strong>Use cases:</strong> Database migrations, major updates, or critical bug fixes.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
                         {/* Home Page Attribution */}
                         <div className="bg-gradient-to-br from-amber-50 to-orange-50 shadow-lg rounded-2xl border border-amber-100 p-6 hover:shadow-xl transition-shadow duration-300">

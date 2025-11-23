@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import admin, { auth as adminAuth } from '@/lib/firebase-admin';
 import { getBucketId, getServerAppwrite } from '@/lib/appwrite-server';
+import { isMaintenanceModeActive } from '@/lib/maintenance';
 
 const jsonError = (status: number, message: string) => NextResponse.json({ error: message }, { status });
 
@@ -22,6 +23,10 @@ function extractFileIds(html: string): string[] {
 }
 
 export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  // Check maintenance mode first
+  if (await isMaintenanceModeActive()) {
+    return jsonError(503, 'System is under maintenance');
+  }
   try {
     if (!adminAuth) return jsonError(500, 'Server not ready');
     const cookieStore = await cookies();

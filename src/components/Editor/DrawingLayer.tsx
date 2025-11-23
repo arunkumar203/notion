@@ -58,9 +58,22 @@ const DrawingLayer = forwardRef<DrawingLayerHandle, DrawingLayerProps>(({
     const svgRef = useRef<SVGSVGElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
 
-    // Update strokes when initialStrokes changes
+    // Update strokes when initialStrokes changes (clear old ones immediately to prevent cross-contamination)
     useEffect(() => {
+        // Immediately clear current strokes to prevent drawings from previous page
+        setStrokes([]);
+        setCurrentPoints([]);
+        setIsDrawing(false); // Cancel any in-progress drawing
+
+        // Then set new strokes
         setStrokes(initialStrokes);
+
+        // Cleanup on unmount or when changing pages
+        return () => {
+            setStrokes([]);
+            setCurrentPoints([]);
+            setIsDrawing(false);
+        };
     }, [initialStrokes]);
 
     // Clear all strokes
@@ -124,7 +137,7 @@ const DrawingLayer = forwardRef<DrawingLayerHandle, DrawingLayerProps>(({
                 }
             }
         }
-    }, [isDrawing, isActive, getPointerPosition, tool, strokes, onStrokesChange, canvasHeight]);
+    }, [isDrawing, isActive, getPointerPosition, tool, strokes, onStrokesChange, canvasHeight, onRequestExpand]);
 
     const handlePointerUp = useCallback(() => {
         if (!isDrawing) return;

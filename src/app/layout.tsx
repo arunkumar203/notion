@@ -6,6 +6,7 @@ import { AuthProvider } from "@/context/AuthContext";
 import { NotebookProvider } from "@/context/NotebookContext";
 import GlobalDragOverlay from "@/components/Files/GlobalDragOverlay";
 import dynamic from 'next/dynamic';
+import MaintenanceWrapper from "@/components/MaintenanceWrapper";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -33,9 +34,13 @@ export default function RootLayout({
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <AuthProvider>
           <NotebookProvider>
-            {children}
-            <FirstTimeSetup />
-            <GlobalDragOverlay />
+            <MaintenanceWrapper>
+              <div className="contents">
+                <div key="app-content" className="contents">{children}</div>
+                <FirstTimeSetup key="setup" />
+                <GlobalDragOverlay key="drag" />
+              </div>
+            </MaintenanceWrapper>
           </NotebookProvider>
         </AuthProvider>
       </body>

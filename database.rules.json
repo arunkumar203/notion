@@ -6,7 +6,7 @@
       ".read": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'root_admin' || root.child('users').child(auth.uid).child('role').val() === 'admin')",
       "$uid": {
         ".read": "auth != null && (auth.uid === $uid || root.child('users').child(auth.uid).child('role').val() === 'root_admin' || root.child('users').child(auth.uid).child('role').val() === 'admin')",
-        ".write": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid && (root.child('adminSettings').child('maintenanceMode').val() !== true || root.child('users').child(auth.uid).child('role').val() === 'admin' || root.child('users').child(auth.uid).child('role').val() === 'root_admin')",
         "role": {
           ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'root_admin'"
         },
@@ -40,7 +40,7 @@
       ".read": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'root_admin' || root.child('users').child(auth.uid).child('role').val() === 'admin')",
       "$nbid": {
         ".read": "auth != null && (data.child('owner').val() === auth.uid || root.child('users').child(auth.uid).child('role').val() === 'root_admin' || root.child('users').child(auth.uid).child('role').val() === 'admin')",
-        ".write": "auth != null && (data.child('owner').val() === auth.uid || (!data.exists() && newData.child('owner').val() === auth.uid))",
+        ".write": "auth != null && (root.child('adminSettings').child('maintenanceMode').val() !== true || root.child('users').child(auth.uid).child('role').val() === 'admin' || root.child('users').child(auth.uid).child('role').val() === 'root_admin') && (data.child('owner').val() === auth.uid || (!data.exists() && newData.child('owner').val() === auth.uid))",
         "sections": {
           "$sid": {
             ".validate": "newData.hasChildren(['name']) && newData.child('name').isString() && (newData.child('owner').val() === auth.uid)",

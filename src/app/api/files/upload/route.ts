@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { appwriteFetch, getAppwriteConfig } from "@/lib/appwrite-rest";
 import { verifyAuthentication } from "@/lib/auth-helpers";
+import { isMaintenanceModeActive } from "@/lib/maintenance";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -8,6 +9,11 @@ export const runtime = "nodejs";
 // Accepts multipart/form-data with `file` field and uploads to Appwrite Storage
 // Requires authentication
 export async function POST(req: Request) {
+  // Check maintenance mode first
+  if (await isMaintenanceModeActive()) {
+    return NextResponse.json({ error: "System is under maintenance" }, { status: 503 });
+  }
+
   // Verify authentication first
   const authResult = await verifyAuthentication();
   if (authResult instanceof NextResponse) {
@@ -31,11 +37,11 @@ export async function POST(req: Request) {
 
     // Basic file type validation
     const allowedTypes = [
-      'image/', 'video/', 'audio/', 'text/', 'application/pdf', 
+      'image/', 'video/', 'audio/', 'text/', 'application/pdf',
       'application/msword', 'application/vnd.openxmlformats-officedocument',
       'application/zip', 'application/json'
     ];
-    
+
     const isAllowedType = allowedTypes.some(type => file.type.startsWith(type));
     if (!isAllowedType) {
       return NextResponse.json({ error: "File type not allowed" }, { status: 400 });
@@ -53,10 +59,10 @@ export async function POST(req: Request) {
       body: fd as any,
     });
     const data = await res.json();
-    
+
     // Log the upload for security auditing
     // console.log(`File uploaded by user ${uid}: ${data.$id} (${file.name}, ${file.size} bytes)`);
-    
+
     return NextResponse.json({ ok: true, file: data });
   } catch (e: any) {
     console.error("[api/files/upload] error", e);

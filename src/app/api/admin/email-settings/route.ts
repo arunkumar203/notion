@@ -14,9 +14,11 @@ export async function GET() {
     const emailSendingEnabled = rawSettings?.emailSendingEnabled ?? true; // Default to enabled
     const showCreatorAttribution = rawSettings?.showCreatorAttribution ?? true; // Default to enabled
     const homePageMessage = rawSettings?.homePageMessage ?? ''; // Default to empty
+    const maintenanceMode = rawSettings?.maintenanceMode ?? false; // Default to disabled
+    const maintenanceMessage = rawSettings?.maintenanceMessage ?? ''; // Default to empty
 
-    return NextResponse.json({ emailSendingEnabled, showCreatorAttribution, homePageMessage });
-    
+    return NextResponse.json({ emailSendingEnabled, showCreatorAttribution, homePageMessage, maintenanceMode, maintenanceMessage });
+
   } catch (error) {
     console.error('Error fetching email settings:', error);
     return jsonError(500, 'Failed to fetch email settings');
