@@ -54,7 +54,7 @@
     "mdast-util-gfm": "^2.0.2",
     "mdast-util-gfm-strikethrough": "^2.0.0",
     "neo4j-driver": "^5.28.2",
-    "next": "15.4.6",
+    "next": "15.4.8",
     "node-appwrite": "^18.0.0",
     "perfect-freehand": "^1.2.2",
     "property-information": "^6.5.0",
