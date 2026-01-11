@@ -1,0 +1,1370 @@
+/* Container */
+.kt {
+  width: 100%;
+  margin: 1.5rem 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #1f2937;
+}
+
+.kt__container {
+  width: 100%;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.kt__scroll {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: visible;
+  background: #ffffff;
+  /* Explicitly set background to white for scroll area */
+}
+
+/* Table */
+.kt__table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: #ffffff;
+  min-width: 800px;
+}
+
+/* Header */
+.kt__table thead {
+  background: #f9fafb;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.kt__th {
+  position: relative;
+  padding: 0;
+  text-align: left;
+  border-right: 1px solid #e5e7eb;
+  vertical-align: top;
+  min-width: 150px;
+  max-width: 300px;
+  background: #f9fafb;
+  transition: background-color 0.15s ease;
+}
+
+.kt__th:last-child:not(.kt__th--add-column) {
+  /* Adjusted to exclude new add column class */
+  border-right: none;
+}
+
+.kt__th:hover {
+  background: #f3f4f6;
+}
+
+.kt__row-handle-header {
+  width: 40px;
+  padding: 0;
+  background: #f9fafb;
+  border-right: 1px solid #e5e7eb;
+}
+
+/* Style for the conditionally rendered 'Add Column' header cell */
+.kt__th--add-column {
+  min-width: 150px;
+  /* Consistent with other columns */
+  max-width: 150px;
+  width: 150px;
+  background: #f9fafb;
+  /* Consistent with other headers */
+  border-right: none;
+  /* No right border for the last column */
+  vertical-align: middle;
+  padding: 0;
+  /* Remove padding from th, button handles it */
+  /* Ensures it behaves like a normal header, but only appears on hover */
+}
+
+.kt__th-inner {
+  position: relative;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.kt__th-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.kt__th-bottom {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.kt__drag-handle {
+  cursor: grab;
+  color: #9ca3af;
+  font-size: 12px;
+  line-height: 1;
+  user-select: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.kt__th:hover .kt__drag-handle,
+.kt__row:hover .kt__drag-handle {
+  opacity: 1;
+}
+
+.kt__drag-handle:active {
+  cursor: grabbing;
+}
+
+.kt__th-name {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+  background: transparent;
+  border: none;
+  outline: none;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background-color 0.15s ease;
+}
+
+.kt__th-name:hover:not(:disabled) {
+  background: #ffffff;
+}
+
+.kt__th-name:focus {
+  background: #ffffff;
+  box-shadow: 0 0 0 2px #3b82f6;
+}
+
+.kt__th-name:disabled {
+  cursor: default;
+}
+
+.kt__type-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  background: transparent;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  font-size: 12px;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.kt__type-btn:hover:not(:disabled) {
+  background: #ffffff;
+  border-color: #d1d5db;
+}
+
+.kt__type-btn:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.kt__type-icon {
+  font-size: 14px;
+}
+
+.kt__type-label {
+  font-size: 12px;
+}
+
+.kt__type-menu {
+  position: absolute;
+  top: 100%;
+  left: 12px;
+  margin-top: 4px;
+  z-index: 100;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05);
+  min-width: 180px;
+}
+
+.kt__manage-tags-btn {
+  padding: 4px 8px;
+  background: transparent;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  color: #6b7280;
+}
+
+.kt__manage-tags-btn:hover {
+  background: #ffffff;
+  border-color: #3b82f6;
+  color: #3b82f6;
+}
+
+.kt__col-delete {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 4px 8px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  opacity: 0;
+  transition: all 0.15s ease;
+}
+
+.kt__th:hover .kt__col-delete {
+  opacity: 1;
+}
+
+.kt__col-delete:hover {
+  background: #fee2e2;
+  border-color: #ef4444;
+}
+
+/* Adjusted for button inside a th */
+.kt__add-col-btn {
+  width: 100%;
+  height: 100%;
+  padding: 12px 16px;
+  background: transparent;
+  border: none;
+  color: #6b7280;
+  font-size: 14px;
+  cursor: pointer;
+  text-align: center;
+  /* Center the text */
+  transition: all 0.15s ease;
+  border-radius: 4px;
+  display: flex;
+  /* Enable flexbox for centering */
+  align-items: center;
+  justify-content: center;
+}
+
+.kt__add-col-btn:hover {
+  background: #f3f4f6;
+  color: #3b82f6;
+}
+
+.kt__dropdown {
+  padding: 4px;
+}
+
+.kt__dropdown-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: #1f2937;
+  font-size: 14px;
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 0.15s ease;
+}
+
+.kt__dropdown-item:hover {
+  background: #f3f4f6;
+}
+
+.kt__dropdown-item--active {
+  background: #eff6ff;
+  color: #3b82f6;
+}
+
+.kt__dropdown-icon {
+  width: 20px;
+  text-align: center;
+  font-size: 14px;
+}
+
+.kt__check {
+  margin-left: auto;
+  color: #3b82f6;
+  font-weight: 600;
+}
+
+/* Body Rows */
+.kt__row {
+  border-bottom: 1px solid #f3f4f6;
+  transition: background-color 0.15s ease;
+}
+
+.kt__row:hover {
+  background: #f9fafb;
+}
+
+.kt__row--add {
+  border-bottom: none;
+}
+
+.kt__row--add:hover {
+  background: transparent;
+}
+
+.kt__row-handle {
+  width: 40px;
+  padding: 0 8px;
+  text-align: center;
+  border-right: 1px solid #f3f4f6;
+  background: #fafafa;
+}
+
+.kt__td {
+  padding: 8px 16px;
+  border-right: 1px solid #f3f4f6;
+  vertical-align: middle;
+  height: 52px;
+}
+
+.kt__td:last-child:not(.kt__row-actions) {
+  border-right: none;
+}
+
+/* Cell Inputs */
+.kt__input {
+  width: 100%;
+  padding: 6px 10px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  font-size: 14px;
+  color: #1f2937;
+  outline: none;
+  transition: all 0.15s ease;
+}
+
+.kt__input:hover:not(:disabled) {
+  background: #f9fafb;
+  border-color: #e5e7eb;
+}
+
+.kt__input:focus {
+  background: #ffffff;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.kt__input:disabled {
+  cursor: default;
+  color: #6b7280;
+}
+
+/* Select Cell */
+.kt__select-cell {
+  display: flex;
+  align-items: center;
+}
+
+.kt__select {
+  flex: 1;
+  padding: 6px 10px;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.15s ease;
+  appearance: none;
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 12px;
+  padding-right: 28px;
+}
+
+.kt__select:hover:not(:disabled) {
+  opacity: 0.9;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.kt__select:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+
+.kt__select option {
+  background: #ffffff;
+  color: #1f2937;
+}
+
+/* Checkbox Cell */
+.kt__checkbox-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.kt__checkbox {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: #3b82f6;
+}
+
+.kt__checkbox:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+/* Progress Cell */
+.kt__progress-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.kt__progress-bar {
+  flex: 1;
+  height: 8px;
+  background: #e5e7eb;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.kt__progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.kt__progress-input {
+  width: 48px;
+  padding: 4px 6px;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  font-size: 13px;
+  text-align: center;
+  outline: none;
+}
+
+.kt__progress-input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.kt__progress-label {
+  font-size: 13px;
+  color: #6b7280;
+  min-width: 12px;
+}
+
+/* Created Time Cell */
+.kt__created-time {
+  font-size: 13px;
+  color: #6b7280;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Row Actions */
+.kt__row-actions {
+  padding: 8px;
+  text-align: center;
+  border-right: none;
+  background: #fafafa;
+}
+
+.kt__icon-btn {
+  padding: 4px 8px;
+  background: transparent;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.kt__icon-btn:hover {
+  background: #fee2e2;
+  border-color: #ef4444;
+}
+
+.kt__add-row-btn {
+  width: 100%;
+  padding: 10px 16px;
+  background: transparent;
+  border: none;
+  color: #6b7280;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.kt__add-row-btn:hover {
+  background: #f3f4f6;
+  color: #3b82f6;
+}
+
+/* Modal */
+.kt__modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.kt__modal {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
+  width: 90%;
+  max-width: 500px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.kt__modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.kt__modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.kt__modal-close {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  font-size: 24px;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.kt__modal-close:hover {
+  background: #f3f4f6;
+  color: #1f2937;
+}
+
+.kt__modal-body {
+  flex: 1;
+  padding: 24px;
+  overflow-y: auto;
+}
+
+.kt__modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 24px;
+  border-top: 1px solid #e5e7eb;
+}
+
+/* Tag Management */
+.kt__tag-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.kt__tag-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  transition: all 0.15s ease;
+}
+
+.kt__tag-item:hover {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+.kt__tag-color {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.kt__tag-label {
+  flex: 1;
+  font-size: 14px;
+  color: #1f2937;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background-color 0.15s ease;
+}
+
+.kt__tag-label:hover {
+  background: #e5e7eb;
+}
+
+.kt__tag-edit-input {
+  flex: 1;
+  padding: 4px 8px;
+  background: #ffffff;
+  border: 1px solid #3b82f6;
+  border-radius: 4px;
+  font-size: 14px;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.kt__color-picker {
+  width: 32px;
+  height: 32px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.kt__color-picker:hover {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.kt__tag-delete {
+  padding: 6px 10px;
+  background: transparent;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  color: #6b7280;
+}
+
+.kt__tag-delete:hover {
+  background: #fee2e2;
+  border-color: #ef4444;
+  color: #ef4444;
+}
+
+.kt__tag-add {
+  display: flex;
+  gap: 12px;
+  padding: 16px;
+  background: #f9fafb;
+  border: 2px dashed #e5e7eb;
+  border-radius: 8px;
+}
+
+.kt__tag-input {
+  flex: 1;
+  padding: 8px 12px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 14px;
+  outline: none;
+  transition: all 0.15s ease;
+}
+
+.kt__tag-input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Buttons */
+.kt__btn {
+  padding: 8px 16px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #1f2937;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.kt__btn:hover {
+  background: #f9fafb;
+  border-color: #d1d5db;
+}
+
+.kt__btn-primary {
+  padding: 8px 16px;
+  background: #3b82f6;
+  border: 1px solid #3b82f6;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #ffffff;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.kt__btn-primary:hover {
+  background: #2563eb;
+  border-color: #2563eb;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.kt__btn-primary:active {
+  transform: translateY(1px);
+}
+
+/* Drag & Drop States */
+.kt__th[draggable="true"]:active,
+.kt__row[draggable="true"]:active {
+  opacity: 0.5;
+  cursor: grabbing;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .kt__table {
+    min-width: 600px;
+  }
+
+  .kt__th,
+  .kt__td {
+    min-width: 120px;
+    padding: 8px 12px;
+  }
+
+  .kt__modal {
+    width: 95%;
+    max-height: 90vh;
+  }
+}
+
+
+
+/* ==============================
+   Kanban Board (Notion-like)
+   Only applies when root has .kt-kanban
+   ============================== */
+
+.kt.kt-kanban .ktb__outer {
+  width: 100%;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  position: relative;
+}
+
+.kt.kt-kanban .ktb__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid #f3f4f6;
+  background: #f9fafb;
+}
+
+.kt.kt-kanban .ktb__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.kt.kt-kanban .ktb__title-label {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.kt.kt-kanban .ktb__title-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.kt.kt-kanban .ktb__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.kt.kt-kanban .ktb__board {
+  display: flex;
+  gap: 16px;
+  padding: 16px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  background: #ffffff;
+  min-height: 300px;
+  /* Ensure some height for empty states */
+}
+
+/* Vertical / Fit Modifier Classes */
+
+/* Vertical: Columns stack top-to-bottom */
+/* Vertical: Columns stack top-to-bottom */
+.kt.kt-kanban .ktb__board--vertical {
+  flex-direction: column;
+  gap: 24px;
+  /* Space between swimlanes */
+}
+
+/* Each column becomes a row (Header | Cards) */
+.kt.kt-kanban .ktb__board--vertical .ktb__column {
+  flex: none;
+  width: 100%;
+  max-height: none;
+  flex-direction: row;
+  /* Horizontal layout for the group itself */
+  align-items: flex-start;
+  gap: 16px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid #f3f4f6;
+  border-radius: 0;
+  padding: 0 0 16px 0;
+}
+
+.kt.kt-kanban .ktb__board--vertical .ktb__column:last-child {
+  border-bottom: none;
+}
+
+/* Header becomes a side label */
+/* Header becomes a side label */
+.kt.kt-kanban .ktb__board--vertical .ktb__column-header {
+  width: 100px;
+  /* Fixed width for the label */
+  flex-shrink: 0;
+  padding-top: 10px;
+  border-right: 2px solid #e5e7eb;
+  margin-right: 8px;
+}
+
+/* Vertical layout specific: Cards become horizontal flow */
+.kt.kt-kanban .ktb__board--vertical .ktb__cards {
+  flex: 1;
+  flex-direction: row;
+  flex-wrap: wrap;
+  overflow-y: visible;
+  /* Don't scroll inside the row */
+  align-items: flex-start;
+  padding-bottom: 8px;
+  gap: 12px;
+}
+
+/* Adjust card size in horizontal list mode */
+.kt.kt-kanban .ktb__board--vertical .ktb__card {
+  width: 200px;
+  flex: none;
+}
+
+/* Vertical layout specific: buttons positioning */
+.kt.kt-kanban .ktb__board--vertical .ktb__add-card {
+  width: 120px;
+  flex-shrink: 0;
+  margin-top: 0;
+  height: fit-content;
+}
+
+/* Horizontal Fit: Columns expand to fill available width */
+.kt.kt-kanban .ktb__board:not(.ktb__board--vertical).ktb__board--fit .ktb__column {
+  flex: 1;
+  min-width: 250px;
+}
+
+/* Vertical Fit: Restrict height of the board and scroll vertically */
+.kt.kt-kanban .ktb__board--vertical.ktb__board--fit {
+  height: 80vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+
+/* Default Column Styles */
+.kt.kt-kanban .ktb__column {
+  flex: 0 0 300px;
+  display: flex;
+  flex-direction: column;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 10px;
+  max-height: 70vh;
+  /* Default Horizontal: column scrolls internally */
+}
+
+.kt.kt-kanban .ktb__column.is-dnd-active {
+  border-color: #93c5fd;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.kt.kt-kanban .ktb__column-header {
+  padding: 4px 6px 10px 6px;
+}
+
+.kt.kt-kanban .ktb__column-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.kt.kt-kanban .ktb__swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+}
+
+.kt.kt-kanban .ktb__swatch--none {
+  background: #d1d5db;
+}
+
+.kt.kt-kanban .ktb__name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.kt.kt-kanban .ktb__count {
+  margin-left: auto;
+  font-size: 12px;
+  color: #6b7280;
+  background: #eef2ff;
+  border: 1px solid #e5e7eb;
+  padding: 2px 8px;
+  border-radius: 9999px;
+}
+
+
+.kt.kt-kanban .ktb__cards {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 2px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* Vertical layout specific: Cards become horizontal flow */
+/* Vertical layout specific: Cards become horizontal flow */
+/* Vertical layout specific: Cards become horizontal flow */
+.kt.kt-kanban .ktb__board--vertical .ktb__cards {
+  flex-direction: row;
+  flex-wrap: nowrap;
+  /* Force single line */
+  overflow-x: auto;
+  /* Scroll horizontally */
+  overflow-y: hidden;
+  align-items: flex-start;
+  padding-bottom: 12px;
+  /* Scrollbar space */
+  gap: 6px;
+}
+
+/* Adjust card size in horizontal list mode */
+.kt.kt-kanban .ktb__board--vertical .ktb__card {
+  width: 130px;
+  /* Fixed width */
+  flex-shrink: 0;
+  /* Don't squash */
+}
+
+/* Vertical layout specific: buttons positioning */
+.kt.kt-kanban .ktb__board--vertical .ktb__add-card {
+  width: 100px;
+  font-size: 11px;
+  flex-shrink: 0;
+  margin-top: 0;
+  height: fit-content;
+}
+
+/* Drop placeholder line showing where the card will be inserted */
+.kt.kt-kanban .ktb__drop-line {
+  height: 2px;
+  background: #3b82f6;
+  border-radius: 1px;
+  margin: 2px 4px 8px 4px;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.12);
+  animation: ktbDropIn 120ms ease;
+}
+
+@keyframes ktbDropIn {
+  from {
+    opacity: 0;
+    transform: scaleX(0.9);
+  }
+
+  to {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+}
+
+.kt.kt-kanban .ktb__card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 10px 12px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: box-shadow 0.2s ease, transform 0.2s ease, background-color 0.2s ease;
+  cursor: grab;
+  position: relative;
+}
+
+.kt.kt-kanban .ktb__card:hover {
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
+}
+
+.kt.kt-kanban .ktb__card.is-dragging {
+  opacity: 0.7;
+  transform: rotate(1deg) scale(0.98);
+  cursor: grabbing;
+}
+
+.kt.kt-kanban .ktb__card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 6px;
+}
+
+.kt.kt-kanban .ktb__card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.kt.kt-kanban .ktb__meta-item {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.kt.kt-kanban .ktb__add-card {
+  margin-top: 10px;
+  padding: 8px 10px;
+  background: transparent;
+  border: 1px dashed #d1d5db;
+  color: #6b7280;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: left;
+}
+
+.kt.kt-kanban .ktb__add-card:hover {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+  color: #2563eb;
+}
+
+/* Card delete button */
+.kt.kt-kanban .ktb__card-delete {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  color: #6b7280;
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  transition: all 0.2s ease;
+  z-index: 10;
+  line-height: 1;
+  padding: 0;
+}
+
+.kt.kt-kanban .ktb__card:hover .ktb__card-delete {
+  opacity: 1;
+}
+
+.kt.kt-kanban .ktb__card-delete:hover {
+  background: #fee2e2;
+  border-color: #fca5a5;
+  color: #dc2626;
+  transform: scale(1.1);
+}
+
+.kt.kt-kanban .ktb__card-delete:active {
+  transform: scale(0.95);
+}
+
+/* Card delete button */
+.kt.kt-kanban .ktb__card-delete {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 20px;
+  height: 20px;
+  border: none;
+  border-radius: 50%;
+  background: #ef4444;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: all 0.2s ease;
+  z-index: 10;
+  line-height: 1;
+}
+
+.kt.kt-kanban .ktb__card:hover .ktb__card-delete {
+  opacity: 1;
+}
+
+.kt.kt-kanban .ktb__card-delete:hover {
+  background: #dc2626;
+  transform: scale(1.1);
+}
+
+/* Scrollbar polish (WebKit) */
+.kt.kt-kanban .ktb__board::-webkit-scrollbar,
+.kt.kt-kanban .ktb__cards::-webkit-scrollbar {
+  height: 10px;
+  width: 8px;
+}
+
+.kt.kt-kanban .ktb__board::-webkit-scrollbar-thumb,
+.kt.kt-kanban .ktb__cards::-webkit-scrollbar-thumb {
+  background: #e5e7eb;
+  border-radius: 9999px;
+}
+
+.kt.kt-kanban .ktb__board::-webkit-scrollbar-thumb:hover,
+.kt.kt-kanban .ktb__cards::-webkit-scrollbar-thumb:hover {
+  background: #d1d5db;
+}
+
+/* Kanban light theme styles */
+.kt.kt-kanban .ktb__outer {
+  background: #ffffff !important;
+  border-color: #e5e7eb !important;
+}
+
+.kt.kt-kanban .ktb__toolbar {
+  background: #f9fafb !important;
+  border-bottom-color: #f3f4f6 !important;
+}
+
+.kt.kt-kanban .ktb__title-value {
+  color: #1f2937 !important;
+}
+
+.kt.kt-kanban .ktb__title-label {
+  color: #6b7280 !important;
+}
+
+.kt.kt-kanban .ktb__board {
+  background: #ffffff !important;
+}
+
+.kt.kt-kanban .ktb__column {
+  background: #f9fafb !important;
+  border-color: #e5e7eb !important;
+}
+
+.kt.kt-kanban .ktb__name {
+  color: #1f2937 !important;
+}
+
+.kt.kt-kanban .ktb__count {
+  background: #eef2ff !important;
+  border-color: #e5e7eb !important;
+  color: #6b7280 !important;
+}
+
+.kt.kt-kanban .ktb__card {
+  background: #ffffff !important;
+  border-color: #e5e7eb !important;
+}
+
+.kt.kt-kanban .ktb__card-title {
+  color: #111827 !important;
+}
+
+.kt.kt-kanban .ktb__meta-item {
+  color: #6b7280 !important;
+}
+
+.kt.kt-kanban .ktb__add-card {
+  color: #6b7280 !important;
+  border-color: #d1d5db !important;
+}
+
+.kt.kt-kanban .ktb__add-card:hover {
+  background: #f3f4f6 !important;
+  border-color: #9ca3af !important;
+  color: #2563eb !important;
+}
+
+.kt.kt-kanban .ktb__drop-line {
+  background: #3b82f6 !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.12) !important;
+}
+
+/* Force light mode for card delete button */
+.kt.kt-kanban .ktb__card-delete {
+  background: #f3f4f6 !important;
+  border-color: #e5e7eb !important;
+  color: #6b7280 !important;
+}
+
+.kt.kt-kanban .ktb__card-delete:hover {
+  background: #fee2e2 !important;
+  border-color: #fca5a5 !important;
+  color: #dc2626 !important;
+}
+
+/* Kanban delete button */
+.kt__kanban-delete {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  color: #6b7280;
+  font-size: 14px;
+  font-weight: 400;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  line-height: 1;
+  padding: 0;
+  font-family: Arial, sans-serif;
+  margin-left: 8px;
+}
+
+.kt__kanban-delete:hover {
+  background: #fee2e2;
+  border-color: #fca5a5;
+  color: #dc2626;
+  transform: scale(1.1);
+}
+
+.kt__kanban-delete:active {
+  transform: scale(0.95);
+}
+
+/* View-only mode styling for Kanban */
+.kt.kt-kanban .ktb__card[draggable="false"] {
+  cursor: default !important;
+}
+
+.kt.kt-kanban .ktb__card[draggable="false"]:hover {
+  transform: none !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+}
+
+.kt.kt-kanban .ktb__card-title-input:disabled {
+  background: #f9fafb !important;
+  color: #6b7280 !important;
+  cursor: default !important;
+}
+
+/* Force light mode for buttons and modals */
+.kt.kt-kanban .kt__manage-tags-btn {
+  background: transparent !important;
+  border-color: #e5e7eb !important;
+  color: #6b7280 !important;
+}
+
+.kt.kt-kanban .kt__manage-tags-btn:hover:not(:disabled) {
+  background: #ffffff !important;
+  border-color: #3b82f6 !important;
+  color: #3b82f6 !important;
+}
+
+.kt.kt-kanban .kt__manage-tags-btn:disabled {
+  background: #f9fafb !important;
+  border-color: #e5e7eb !important;
+  color: #9ca3af !important;
+  cursor: not-allowed !important;
+  opacity: 0.6 !important;
+}
+
+.kt.kt-kanban .kt__btn {
+  background: #ffffff !important;
+  border-color: #e5e7eb !important;
+  color: #1f2937 !important;
+}
+
+.kt.kt-kanban .kt__btn:hover:not(:disabled) {
+  background: #f9fafb !important;
+  border-color: #d1d5db !important;
+}
+
+.kt.kt-kanban .kt__btn:disabled {
+  background: #f9fafb !important;
+  border-color: #e5e7eb !important;
+  color: #9ca3af !important;
+  cursor: not-allowed !important;
+  opacity: 0.6 !important;
+}

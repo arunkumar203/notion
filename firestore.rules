@@ -1,0 +1,26 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Pages: allow any signed-in user; per app logic we validate ownership against Realtime Database
+    match /pages/{pageId} {
+      allow create, read, update, delete: if isSignedIn();
+    }
+
+    // Shares: owner-managed. Access by others should go through server endpoints.
+    match /shares/{shareId} {
+      // Owner can create their own share docs
+      allow create: if isSignedIn() && request.resource.data.ownerUid == request.auth.uid;
+      // Owner can read/update/delete their own shares
+      allow read, update, delete: if isSignedIn() && resource.data.ownerUid == request.auth.uid;
+    }
+
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -1,0 +1,156 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "users": {
+      ".read": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'root_admin' || root.child('users').child(auth.uid).child('role').val() === 'admin')",
+      "$uid": {
+        ".read": "auth != null && (auth.uid === $uid || root.child('users').child(auth.uid).child('role').val() === 'root_admin' || root.child('users').child(auth.uid).child('role').val() === 'admin')",
+        ".write": "auth != null && auth.uid === $uid && (root.child('adminSettings').child('maintenanceMode').val() !== true || root.child('users').child(auth.uid).child('role').val() === 'admin' || root.child('users').child(auth.uid).child('role').val() === 'root_admin' || !data.exists())",
+        "role": {
+          ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'root_admin'"
+        },
+        "notebooks": {
+          ".indexOn": [
+            "name"
+          ],
+          "$nbid": {
+            ".validate": "newData.hasChildren(['name']) && newData.child('name').isString() && newData.child('name').val().length <= 200"
+          }
+        },
+        "workspaces": {
+          ".indexOn": [
+            "name"
+          ],
+          "$wsid": {
+            ".validate": "newData.val() === true || newData.isNumber() || (newData.hasChildren(['name']) && newData.child('name').isString() && newData.child('name').val().length <= 200)"
+          }
+        },
+        "settings": {
+          "ai": {
+            ".read": "auth != null && auth.uid === $uid",
+            ".write": "auth != null && auth.uid === $uid"
+          }
+        },
+        "rag": {
+          ".read": "auth != null && auth.uid === $uid",
+          ".write": "auth != null && auth.uid === $uid"
+        },
+        "sharedLinks": {
+          "$pageId": {
+            ".read": "auth != null && auth.uid === $uid",
+            ".write": "auth != null && auth.uid === $uid"
+          }
+        },
+        "shared_workspaces": {
+          "$wsid": {
+            ".read": "auth != null && auth.uid === $uid",
+            ".write": "auth != null && auth.uid === $uid"
+          }
+        },
+        "files": {
+          ".read": "auth != null && auth.uid === $uid",
+          ".write": "auth != null && auth.uid === $uid",
+          "$fileId": {
+            ".validate": "newData.hasChildren(['id', 'name', 'size', 'uploadedBy']) && newData.child('uploadedBy').val() === auth.uid"
+          }
+        },
+        "storageUsed": {
+          ".read": "auth != null && auth.uid === $uid",
+          ".write": "auth != null && auth.uid === $uid",
+          ".validate": "newData.isNumber() && newData.val() >= 0"
+        }
+      }
+    },
+    "notebooks": {
+      ".read": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'root_admin' || root.child('users').child(auth.uid).child('role').val() === 'admin')",
+      "$nbid": {
+        ".read": "auth != null && (data.child('owner').val() === auth.uid || root.child('users').child(auth.uid).child('role').val() === 'root_admin' || root.child('users').child(auth.uid).child('role').val() === 'admin')",
+        ".write": "auth != null && (root.child('adminSettings').child('maintenanceMode').val() !== true || root.child('users').child(auth.uid).child('role').val() === 'admin' || root.child('users').child(auth.uid).child('role').val() === 'root_admin') && (data.child('owner').val() === auth.uid || (!data.exists() && newData.child('owner').val() === auth.uid))",
+        "sections": {
+          "$sid": {
+            ".validate": "newData.hasChildren(['name']) && newData.child('name').isString() && (newData.child('owner').val() === auth.uid)",
+            "topics": {
+              "$tid": {
+                ".validate": "newData.hasChildren(['name']) && newData.child('name').isString() && (newData.child('owner').val() === auth.uid)",
+                "pages": {
+                  "$pid": {
+                    ".validate": "newData.hasChildren(['name']) && newData.child('name').isString() && (newData.child('owner').val() === auth.uid)"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "workspaces": {
+      ".read": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'root_admin' || root.child('users').child(auth.uid).child('role').val() === 'admin')",
+      "$wsid": {
+        ".read": "auth != null && (data.child('owner').val() === auth.uid || data.child('members').child(auth.uid).exists() || root.child('users').child(auth.uid).child('role').val() === 'root_admin' || root.child('users').child(auth.uid).child('role').val() === 'admin')",
+        ".write": "auth != null && (root.child('adminSettings').child('maintenanceMode').val() !== true || root.child('users').child(auth.uid).child('role').val() === 'admin' || root.child('users').child(auth.uid).child('role').val() === 'root_admin') && (data.child('owner').val() === auth.uid || (!data.exists() && newData.child('owner').val() === auth.uid) || data.child('members').child(auth.uid).child('role').val() === 'admin' || data.child('members').child(auth.uid).child('role').val() === 'editor')",
+        "members": {
+          "$memberId": {
+            ".write": "auth != null && (root.child('workspaces').child($wsid).child('owner').val() === auth.uid || root.child('workspaces').child($wsid).child('members').child(auth.uid).child('role').val() === 'admin')"
+          }
+        },
+        "notebooks": {
+          "$nbid": {
+            ".read": "auth != null && (root.child('workspaces').child($wsid).child('owner').val() === auth.uid || root.child('workspaces').child($wsid).child('members').child(auth.uid).exists())",
+            ".write": "auth != null && (root.child('workspaces').child($wsid).child('owner').val() === auth.uid || root.child('workspaces').child($wsid).child('members').child(auth.uid).child('role').val() === 'admin' || root.child('workspaces').child($wsid).child('members').child(auth.uid).child('role').val() === 'editor')",
+            ".validate": "newData.hasChildren(['name']) && newData.child('name').isString()",
+            "sections": {
+              "$sid": {
+                ".read": "auth != null && (root.child('workspaces').child($wsid).child('owner').val() === auth.uid || root.child('workspaces').child($wsid).child('members').child(auth.uid).exists())",
+                ".write": "auth != null && (root.child('workspaces').child($wsid).child('owner').val() === auth.uid || root.child('workspaces').child($wsid).child('members').child(auth.uid).child('role').val() === 'admin' || root.child('workspaces').child($wsid).child('members').child(auth.uid).child('role').val() === 'editor')",
+                ".validate": "newData.hasChildren(['name']) && newData.child('name').isString()",
+                "topics": {
+                  "$tid": {
+                    ".read": "auth != null && (root.child('workspaces').child($wsid).child('owner').val() === auth.uid || root.child('workspaces').child($wsid).child('members').child(auth.uid).exists())",
+                    ".write": "auth != null && (root.child('workspaces').child($wsid).child('owner').val() === auth.uid || root.child('workspaces').child($wsid).child('members').child(auth.uid).child('role').val() === 'admin' || root.child('workspaces').child($wsid).child('members').child(auth.uid).child('role').val() === 'editor')",
+                    ".validate": "newData.hasChildren(['name']) && newData.child('name').isString()",
+                    "pages": {
+                      "$pid": {
+                        ".read": "auth != null && (root.child('workspaces').child($wsid).child('owner').val() === auth.uid || root.child('workspaces').child($wsid).child('members').child(auth.uid).exists())",
+                        ".write": "auth != null && (root.child('workspaces').child($wsid).child('owner').val() === auth.uid || root.child('workspaces').child($wsid).child('members').child(auth.uid).child('role').val() === 'admin' || root.child('workspaces').child($wsid).child('members').child(auth.uid).child('role').val() === 'editor')",
+                        ".validate": "newData.child('name').isString()"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "audit_logs": {
+          "$logId": {
+            ".write": "auth != null && (root.child('workspaces').child($wsid).child('owner').val() === auth.uid || root.child('workspaces').child($wsid).child('members').child(auth.uid).exists() || root.child('users').child(auth.uid).child('role').val() === 'admin' || root.child('users').child(auth.uid).child('role').val() === 'root_admin')"
+          },
+          ".read": "auth != null && (root.child('workspaces').child($wsid).child('owner').val() === auth.uid || root.child('workspaces').child($wsid).child('members').child(auth.uid).child('role').val() === 'admin' || root.child('users').child(auth.uid).child('role').val() === 'admin' || root.child('users').child(auth.uid).child('role').val() === 'root_admin')"
+        }
+      }
+    },
+    "invites": {
+      ".indexOn": [
+        "email",
+        "workspaceId",
+        "status"
+      ],
+      "$inviteId": {
+        ".read": "auth != null && (data.child('email').val() === root.child('users').child(auth.uid).child('email').val() || root.child('workspaces').child(data.child('workspaceId').val()).child('owner').val() === auth.uid || root.child('workspaces').child(data.child('workspaceId').val()).child('members').child(auth.uid).child('role').val() === 'admin')",
+        ".write": "auth != null && (root.child('workspaces').child(newData.child('workspaceId').val()).child('owner').val() === auth.uid || root.child('workspaces').child(newData.child('workspaceId').val()).child('members').child(auth.uid).child('role').val() === 'admin' || data.child('email').val() === root.child('users').child(auth.uid).child('email').val())"
+      }
+    },
+    "adminSettings": {
+      ".read": true,
+      ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'root_admin'"
+    },
+    "fileIndex": {
+      ".read": "auth != null",
+      "$fileId": {
+        ".write": "auth != null && (!data.exists() || data.val() === auth.uid || root.child('users').child(auth.uid).child('role').val() === 'root_admin' || root.child('users').child(auth.uid).child('role').val() === 'admin')",
+        ".validate": "newData.isString()"
+      }
+    }
+  }
+}
