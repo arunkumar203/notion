@@ -22,8 +22,6 @@
     "@tiptap/extension-character-count": "^3.1.0",
     "@tiptap/extension-code": "^3.11.0",
     "@tiptap/extension-code-block-lowlight": "^3.2.0",
-    "@tiptap/extension-collaboration": "^3.15.0",
-    "@tiptap/extension-collaboration-cursor": "^2.26.2",
     "@tiptap/extension-color": "^3.2.0",
     "@tiptap/extension-floating-menu": "^3.1.0",
     "@tiptap/extension-font-family": "^3.4.2",
@@ -77,10 +75,7 @@
     "react-markdown": "^10.1.0",
     "reactflow": "^11.11.4",
     "rehype-raw": "^7.0.0",
-    "remark-gfm": "^4.0.1",
-    "tiptap": "^1.32.2",
-    "y-protocols": "^1.0.7",
-    "yjs": "^13.6.29"
+    "remark-gfm": "^4.0.1"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

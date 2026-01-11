@@ -1,16 +1,21 @@
 # OneNot
 
-A fast, minimal Notion-like editor with notebooks/sections/topics, rich text editing, file uploads, sharing, and optional "secret" notes. Built with Next.js App Router, TipTap, Firebase (Auth/RTDB/Firestore), and Appwrite storage.
+A fast, minimal Notion-like editor with workspaces, notebooks/sections/topics, rich text editing, file uploads, sharing, and optional "secret" notes. Built with Next.js App Router, TipTap, Firebase (Auth/RTDB/Firestore), and Appwrite storage.
 
 Live demo: https://notion-ten-rose.vercel.app/
 
 ## Features
 
-- Notebook hierarchy
+- **Workspaces**
+	- Create multiple workspaces to organize your content
+	- Invite members via email with role-based access (Admin, Editor, Viewer)
+	- Switch between workspaces easily
+	- Workspace-level settings and permissions
+- **Notebook hierarchy**
 	- Notebooks → Sections → Topics → Pages
 	- Sort pages by Updated/Created/Custom (drag to reorder)
 	- Overlay selector to quickly choose notebook/section/topic
-- Pages list and editor
+- **Pages list and editor**
 	- Pages panel with organization and custom sorting
 	- Rich editor (TipTap) with headings, lists, images, code, etc.
 	- Auto-save with debounce and error handling
@@ -18,19 +23,27 @@ Live demo: https://notion-ten-rose.vercel.app/
 	- Copy-as-markup (HTML/plain) button
 	- Spellcheck and View-only toggles
 	- Right-side H1 outline rail (read-only, no editor interference)
-- Files
+	- View patterns: Rule lines (Narrow, College, Standard, Wide) and grids
+- **Files**
 	- Upload with progress (Appwrite storage)
-- Share
+	- Per-user storage limits (configurable by admin)
+- **Share**
 	- Share pages with a link; optional edit permission
-- Secret notes
+	- Workspace sharing with member invitations
+- **Secret notes**
 	- Optional password-protected space
 	- Move page to secret (server-side API)
-- AI assist (Google AI Studio / Gemini)
+- **AI assist (Google AI Studio / Gemini)**
 	- Streaming "Write with AI" inside the editor
 	- User-provided API key stored per-account in RTDB
-	- Switch models (Gemini 2.5 Flash/Pro) and streaming speed
+	- Admin-configurable AI models (Flash/Pro)
 	- RAG (Retrieval Augmented Generation) with Neo4j graph database
 	- Context-aware search with neighboring chunks via graph relationships
+- **Admin Dashboard**
+	- User management
+	- System settings (email, signup, maintenance mode)
+	- AI model configuration
+	- Storage limits
 
 ## Tech stack
 
@@ -100,24 +113,7 @@ npm run dev
 
 Open http://localhost:3000
 
-## Neo4j Setup
-
-1. Create a free Neo4j Aura instance at https://neo4j.com/cloud/aura/
-2. Copy your connection URI, username, and password
-3. Add them to your `.env.local` file
-4. The RAG pipeline will automatically create the graph structure:
-   - `User` nodes (one per user)
-   - `Page` nodes (one per page with metadata)
-   - `Chunk` nodes (text chunks with 768-dim embeddings)
-   - `HAS_PAGE` relationships (User → Page)
-   - `HAS_CHUNK` relationships (Page → Chunk)
-   - `NEXT_CHUNK` relationships (Chunk → Chunk for sequential context)
-
 ## Deploy
 
 - Vercel (recommended). Set all the environment variables above in your project settings.
 - Live demo is deployed at: https://notion-ten-rose.vercel.app/
-
-
-
-
